@@ -5,7 +5,7 @@
  * - A catalog entry is a candidate only if it is valid (https Hugging Face URL, sha256, size, params < 4B), has the
  *   same capability (text), runs on this platform, has a comparable published quality score, fits storage and RAM,
  *   is predicted fast enough, and is significantly better (QUALITY_MARGIN) than the active model.
- * - Storage: free space must cover the download plus a reserve of max(3 GB, 15 % of total storage).
+ * - Storage: free space must cover the download plus a reserve of max(3 GB, 5 % of total storage).
  * - Replacement keeps the working model until the new one is downloaded, sha256-verified, loaded, answers a test
  *   prompt correctly and meets the speed limits; only then is it activated and the old one deleted.
  *   Any failure before activation deletes the incomplete new files and keeps (re-loads) the old model. After
@@ -69,7 +69,8 @@ export type Device = { platform: string; totalRam: number; availRam: number; fre
 export const GB = 1e9;
 // Storage: never leave the phone short. Android warns at ~10 % free; apps, the OS and photos need room to grow.
 export const STORAGE_RESERVE_MIN = 3 * GB;
-export const STORAGE_RESERVE_FRACTION = 0.15;
+// 5 %, not the original app's 15 %: on a 113 GB Galaxy M35 with 16.8 GB free, 15 % (17 GB) refused even a 0.5 GB model.
+export const STORAGE_RESERVE_FRACTION = 0.05;
 // RAM: measured on the M35, the 1.1 GB Qwen2.5-1.5B file used 2.0 GB of app memory after load (≈1.8× file size).
 export const RAM_FACTOR = 1.8;
 export const RAM_SYSTEM_HEADROOM = 2.5 * GB; // OS + launcher + the user's other apps must keep running

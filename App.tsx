@@ -23,6 +23,7 @@ import {
   ToastAndroid,
   Linking,
   Pressable,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -855,51 +856,41 @@ ${caution}` : r.text || '(no answer)');
     <SafeAreaView style={[styles.flex, { backgroundColor: c.bg }]}>
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <View style={[styles.header, { borderColor: c.border }]}>
-          <View style={styles.flex}>
-            <Text style={[styles.title, { color: c.text }]}>Local AI</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Model" accessibilityHint="Choose the on-device model" onPress={() => push({ name: 'model' })} disabled={generating}>
-              <Text style={[styles.status, { color: c.muted }]} accessibilityLiveRegion="polite">{statusText} ›</Text>
+          <View style={styles.titleRow}>
+            <View style={styles.flex}>
+              <Text style={[styles.title, { color: c.text }]} numberOfLines={1}>Local <Text style={{ color: c.accent }}>AI</Text></Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Model" accessibilityHint="Choose the on-device model" onPress={() => push({ name: 'model' })} disabled={generating}>
+                <Text style={[styles.status, { color: c.muted }]} numberOfLines={1} accessibilityLiveRegion="polite">
+                  <Text style={{ color: status === 'ready' ? c.ok : c.muted }}>● </Text>{statusText} ›
+                </Text>
+              </Pressable>
+            </View>
+            {(status === 'missing' || status === 'failed') && (
+              <Pressable style={[styles.chip, { backgroundColor: c.accent, borderColor: c.accent }]} accessibilityRole="button"
+                accessibilityLabel={status === 'missing' ? 'Get model' : 'Retry loading the model'}
+                onPress={status === 'missing' ? getModel : loadAndTest}>
+                <Text style={{ color: c.onAccent, fontWeight: '600' }}>{status === 'missing' ? 'Get model' : 'Retry'}</Text>
+              </Pressable>
+            )}
+            <Pressable style={[styles.iconButton, { backgroundColor: c.bubble }]} accessibilityRole="button" accessibilityLabel="Saved chats"
+              onPress={() => push({ name: 'history' })} disabled={generating}>
+              <Text style={[styles.iconText, { color: c.text }]}>🕘</Text>
+            </Pressable>
+            <Pressable style={[styles.iconButton, { backgroundColor: c.bubble }]} accessibilityRole="button" accessibilityLabel="New chat" onPress={newChat}
+              disabled={generating}>
+              <Text style={[styles.iconText, { color: c.accent }]}>＋</Text>
             </Pressable>
           </View>
-          {(status === 'missing' || status === 'failed') && (
-            <Pressable style={[styles.chip, { borderColor: c.accent }]} accessibilityRole="button"
-              accessibilityLabel={status === 'missing' ? 'Get model' : 'Retry loading the model'}
-              onPress={status === 'missing' ? getModel : loadAndTest}>
-              <Text style={{ color: c.accent }}>{status === 'missing' ? 'Get model' : 'Retry'}</Text>
-            </Pressable>
-          )}
-          <Pressable style={[styles.chip, { borderColor: c.border }]} accessibilityRole="button" accessibilityLabel="Documents"
-            onPress={() => push({ name: 'knowledge' })} disabled={generating}>
-            <Text style={{ color: c.text }}>Docs</Text>
-          </Pressable>
-          <Pressable style={[styles.chip, { borderColor: c.border }]} accessibilityRole="button" accessibilityLabel="Agents"
-            onPress={() => push({ name: 'agents' })} disabled={generating}>
-            <Text style={{ color: c.text }}>Agents</Text>
-          </Pressable>
-          <Pressable style={[styles.chip, { borderColor: c.border }]} accessibilityRole="button" accessibilityLabel="Code"
-            onPress={() => push({ name: 'code' })} disabled={generating}>
-            <Text style={{ color: c.text }}>Code</Text>
-          </Pressable>
-          <Pressable style={[styles.chip, { borderColor: c.border }]} accessibilityRole="button" accessibilityLabel="Games"
-            onPress={() => push({ name: 'games' })} disabled={generating}>
-            <Text style={{ color: c.text }}>Games</Text>
-          </Pressable>
-          <Pressable style={[styles.chip, { borderColor: c.border }]} accessibilityRole="button" accessibilityLabel="Connections"
-            onPress={() => push({ name: 'mcp' })} disabled={generating}>
-            <Text style={{ color: c.text }}>Connect</Text>
-          </Pressable>
-          <Pressable style={[styles.chip, { borderColor: c.border }]} accessibilityRole="button" accessibilityLabel="Privacy and data"
-            onPress={() => push({ name: 'data' })} disabled={generating}>
-            <Text style={{ color: c.text }}>Data</Text>
-          </Pressable>
-          <Pressable style={[styles.chip, { borderColor: c.border }]} accessibilityRole="button" accessibilityLabel="Saved chats"
-            onPress={() => push({ name: 'history' })} disabled={generating}>
-            <Text style={{ color: c.text }}>History</Text>
-          </Pressable>
-          <Pressable style={[styles.chip, { borderColor: c.border }]} accessibilityRole="button" accessibilityLabel="New chat" onPress={newChat}
-            disabled={generating}>
-            <Text style={{ color: c.text }}>New</Text>
-          </Pressable>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featureRow}>
+            {([['Documents', '📄', 'Docs', 'knowledge'], ['Agents', '🤖', 'Agents', 'agents'], ['Code', '⌨️', 'Code', 'code'],
+              ['Games', '🎮', 'Games', 'games'], ['Connections', '🔌', 'Connect', 'mcp'], ['Privacy and data', '🛡️', 'Data', 'data']] as const)
+              .map(([label, icon, text, name]) => (
+                <Pressable key={name} style={[styles.feature, { backgroundColor: c.bubble, borderColor: c.border }]} accessibilityRole="button"
+                  accessibilityLabel={label} onPress={() => push({ name } as Screen)} disabled={generating}>
+                  <Text style={{ color: c.text, fontWeight: '500' }}>{icon}  {text}</Text>
+                </Pressable>
+              ))}
+          </ScrollView>
         </View>
         <FlatList
           ref={listRef}
@@ -909,7 +900,7 @@ ${caution}` : r.text || '(no answer)');
           keyExtractor={m => m.id}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           renderItem={({ item }) => (
-            <View style={[styles.bubble, item.role === 'user' ? [styles.mine, { backgroundColor: c.accent }]
+            <View style={[styles.bubble, item.role === 'user' ? [styles.mine, { backgroundColor: c.mine }]
               : { backgroundColor: item.role === 'error' ? c.errorBg : c.bubble }]}>
               <Text selectable style={{ color: item.role === 'user' ? '#fff' : c.text }}>{item.text}</Text>
               {item.game && <Interactive spec={item.game} color={{ text: c.text, muted: c.muted, accent: c.accent, card: c.bg }} />}
@@ -1007,7 +998,7 @@ ${caution}` : r.text || '(no answer)');
           <Pressable style={[styles.toggle, { borderColor: docs.on ? c.accent : c.border, backgroundColor: docs.on ? c.accent : 'transparent' }]}
             accessibilityRole="switch" accessibilityState={{ checked: docs.on }} accessibilityLabel="Ask documents"
             disabled={generating} onPress={() => setDocs(d => ({ ...d, on: !d.on }))}>
-            <Text style={{ color: docs.on ? '#ffffff' : c.text }}>Docs</Text>
+            <Text style={{ color: docs.on ? c.onAccent : c.text, fontWeight: '600' }}>Docs</Text>
           </Pressable>
           <Pressable style={styles.mic} accessibilityRole="button" accessibilityLabel="Add a photo" disabled={generating} onPress={chooseImageSource}>
             <Text style={[styles.micIcon, { color: c.accent }]}>📷</Text>
@@ -1032,13 +1023,13 @@ ${caution}` : r.text || '(no answer)');
           {generating ? (
             <Pressable style={[styles.send, { backgroundColor: c.stop }]} accessibilityRole="button"
               accessibilityLabel="Stop answer" onPress={() => { stopRequested.current = true; local.stop(); }}>
-              <Text style={styles.sendText}>Stop</Text>
+              <Text style={[styles.sendText, { color: '#ffffff' }]}>Stop</Text>
             </Pressable>
           ) : (
             <Pressable style={[styles.send, { backgroundColor: c.accent }]} accessibilityRole="button"
               accessibilityLabel="Send" accessibilityHint="Long-press to review and edit the prompt the model will get"
               onPress={() => { send().catch(() => undefined); }} onLongPress={reviewPrompt}>
-              <Text style={styles.sendText}>Send</Text>
+              <Text style={[styles.sendText, { color: c.onAccent }]}>Send</Text>
             </Pressable>
           )}
         </View>
@@ -1110,17 +1101,22 @@ export function copyText(text: string, label = 'Copied') {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   hidden: { display: 'none' },
-  header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
-  title: { fontSize: 18, fontWeight: '600' },
-  status: { fontSize: 12 },
+  header: { paddingTop: 10, paddingBottom: 10, gap: 10, borderBottomWidth: 1 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16 },
+  title: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  status: { fontSize: 13, marginTop: 2 },
+  iconButton: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  iconText: { fontSize: 20, fontWeight: '700' },
+  featureRow: { gap: 8, paddingHorizontal: 16 },
+  feature: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
   chip: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8, minHeight: 36, justifyContent: 'center' },
-  list: { padding: 12, gap: 8 },
-  bubble: { maxWidth: '85%', borderRadius: 12, padding: 10, alignSelf: 'flex-start' },
-  mine: { alignSelf: 'flex-end' },
+  list: { padding: 14, gap: 10 },
+  bubble: { maxWidth: '86%', borderRadius: 18, borderTopLeftRadius: 6, paddingHorizontal: 14, paddingVertical: 10, alignSelf: 'flex-start' },
+  mine: { alignSelf: 'flex-end', borderTopLeftRadius: 18, borderTopRightRadius: 6 },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, padding: 8, borderTopWidth: 1 },
-  input: { flex: 1, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 },
+  input: { flex: 1, borderWidth: 1, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 },
   send: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, minHeight: 44, justifyContent: 'center' },
-  sendText: { color: '#ffffff', fontWeight: '600' },
+  sendText: { fontWeight: '700' },
   note: { fontSize: 12, marginTop: 6 },
   source: { fontSize: 13, marginTop: 4 },
   actions: { flexDirection: 'row', gap: 16 },

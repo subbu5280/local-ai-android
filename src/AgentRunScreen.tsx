@@ -178,7 +178,7 @@ export function AgentRunScreen({ colors: c, agentId, runId, sampleTask, modelRea
           </Pressable>
           {run?.status === 'planned' && !busy && (
             <Pressable style={[styles.chip, { borderColor: c.accent, backgroundColor: c.accent }]} accessibilityRole="button" accessibilityLabel="Run plan" onPress={start}>
-              <Text style={styles.onAccent}>Run</Text>
+              <Text style={[styles.onAccent, { color: c.onAccent }]}>Run</Text>
             </Pressable>
           )}
           {running && (
@@ -268,5 +268,5 @@ const styles = StyleSheet.create({
   label: { fontWeight: '600', marginTop: 12 },
   small: { fontSize: 12 },
   bold: { fontWeight: '600' },
-  onAccent: { color: '#ffffff', fontWeight: '600' },
+  onAccent: { fontWeight: '600' },
 });

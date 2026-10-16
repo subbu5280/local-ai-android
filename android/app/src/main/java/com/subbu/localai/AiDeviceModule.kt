@@ -47,6 +47,22 @@ class AiDeviceModule(private val ctx: ReactApplicationContext) : ReactContextBas
     cm.setPrimaryClip(android.content.ClipData.newPlainText("Local AI", text))
   }
 
+  /** Full-screen games: hide the status and navigation bars (a swipe from the edge shows them briefly). */
+  @ReactMethod
+  fun setImmersive(on: Boolean) {
+    val activity = reactApplicationContext.currentActivity ?: return
+    activity.runOnUiThread {
+      val window = activity.window
+      val controller = androidx.core.view.WindowInsetsControllerCompat(window, window.decorView)
+      if (on) {
+        controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        controller.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+      } else {
+        controller.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+      }
+    }
+  }
+
   @ReactMethod
   fun keepScreenOn(on: Boolean) {
     val activity = reactApplicationContext.currentActivity ?: return

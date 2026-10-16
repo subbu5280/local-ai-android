@@ -98,6 +98,6 @@ const styles = StyleSheet.create({
   board: { width: 216, flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: 72, height: 72, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   mark: { fontSize: 34, fontWeight: '700' },
-  winMark: { color: '#fff' },
+  winMark: { color: '#1a1530' }, // dark ink on the marigold winning line (readable in both modes)
   again: { marginTop: 8, fontWeight: '600' },
 });

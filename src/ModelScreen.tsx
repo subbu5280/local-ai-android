@@ -34,10 +34,13 @@ export function ModelScreen({ colors: c, focused, onBack, onSwitched }: {
       const [a, st, d] = await Promise.all([local.activeModel(), local.readManagerState(), device()]);
       setActive(a);
       const chat = mm.BUILTIN_CATALOG.filter(m => m.chatCapable && m.supported);
-      setRows(await Promise.all(chat.map(async m => ({
-        model: m, storage: mm.storagePlan(m, d), ram: d.ramKnown ? mm.ramPlan(m, d) : null,
-        speed: mm.predictedTokPerSec(m, st.baseline, a), installed: await local.isInstalled(m).catch(() => false),
-      }))));
+      setRows(await Promise.all(chat.map(async m => {
+        const installed = await local.isInstalled(m).catch(() => false);
+        const plan = mm.storagePlan(m, d);
+        // A downloaded model is already on the phone: it needs no more storage.
+        return { model: m, storage: installed ? { ...plan, ok: true } : plan, ram: d.ramKnown ? mm.ramPlan(m, d) : null,
+          speed: mm.predictedTokPerSec(m, st.baseline, a), installed };
+      })));
     } catch (e: any) { setNote(`Could not read the model list: ${String(e?.message ?? e)}`); }
   }, [device]);
   useEffect(() => { if (focused) load(); }, [focused, load]);

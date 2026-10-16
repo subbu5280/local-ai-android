@@ -507,3 +507,13 @@ the two North rows. Questions without total/average/count/highest/lowest still g
 - **Docs mode survives restarts:** Docs mode and its document scope are saved, so they are still set after Android
   closes the app in the background.
 - **Games stay in history:** an in-chat game is kept in the conversation and opens as a new game when you return.
+
+## Look and feel
+
+- **Theme:** "night indigo" with a marigold accent (`src/theme.ts`), in dark and light mode. Accent text and text on
+  accent buttons meet WCAG AA contrast.
+- **Chat header:** the title and model status sit on one line, with History and New on the right; the features
+  (Docs, Agents, Code, Games, Connect, Data) are in one row that scrolls sideways.
+- **Games:** each game has its name and icon on the menu, and the Games screen is full screen (the status and
+  navigation bars hide, and a swipe from the edge shows them).
+- **Model screen:** keeps max(3 GB, 5 % of storage) free, and a model that is already downloaded always fits.

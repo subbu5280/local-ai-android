@@ -233,6 +233,11 @@ export function MemoryMatch({ spec, color }: { spec: { title?: string }; color: 
 
 // ---------------------------------------------------------------- menu + dispatcher
 export const GAME_KINDS = ['tic_tac_toe', 'rock_paper_scissors', 'number_guessing', 'memory_match'];
+/** Names shown on the game menu. The original app's backend sent these; on the phone the app supplies them. */
+export const GAME_TITLES: Record<string, string> = {
+  tic_tac_toe: '❌⭕  Tic-Tac-Toe', rock_paper_scissors: '✊✋✌️  Rock Paper Scissors',
+  number_guessing: '🔢  Number Guessing', memory_match: '🃏  Memory Match',
+};
 
 const GAME_NAMES: [RegExp, string][] = [
   [/\btic[\s-]*t[aoi]c[\s-]*t[oie]e?\b|\btictactoe\b|\bnoughts and crosses\b|\bx\s*(?:and|&)\s*o\b/i, 'tic_tac_toe'],
@@ -298,7 +303,7 @@ export function GameMenu({ spec, color }: { spec: { title?: string; games: any[]
           onPress={() => setChosen(g)}
           style={[styles.menuItem, { borderColor: color.muted }]}
         >
-          <Text style={{ color: color.accent }}>{g.title}</Text>
+          <Text style={[styles.menuText, { color: color.accent }]}>{g.title || GAME_TITLES[g.kind]}</Text>
         </Pressable>
       ))}
     </View>
@@ -307,16 +312,17 @@ export function GameMenu({ spec, color }: { spec: { title?: string; games: any[]
 
 const styles = StyleSheet.create({
   box: { marginTop: 8, padding: 10, borderWidth: 1, borderRadius: 10, alignItems: 'center', gap: 6 },
-  title: { fontWeight: '700', fontSize: 16 },
+  title: { fontWeight: '700', fontSize: 20 },
   status: { fontWeight: '600', textAlign: 'center' },
   row: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  choice: { borderWidth: 1, borderRadius: 10, padding: 8, alignItems: 'center', width: 76 },
+  choice: { borderWidth: 1, borderRadius: 12, padding: 12, alignItems: 'center', width: 96 },
   dim: { opacity: 0.5 },
-  icon: { fontSize: 28 },
+  icon: { fontSize: 40 },
   action: { fontWeight: '600', paddingVertical: 4 },
   guessInput: { borderWidth: 1, borderRadius: 8, width: 90, paddingHorizontal: 8, paddingVertical: 4, textAlign: 'center' },
-  memoryBoard: { width: 232, flexDirection: 'row', flexWrap: 'wrap' },
-  card: { width: 54, height: 54, margin: 2, borderWidth: 1, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-  cardFace: { fontSize: 26 },
-  menuItem: { borderWidth: 1, borderRadius: 8, paddingVertical: 8, width: 220, alignItems: 'center' },
+  memoryBoard: { width: 304, flexDirection: 'row', flexWrap: 'wrap' },
+  card: { width: 72, height: 72, margin: 2, borderWidth: 1, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  cardFace: { fontSize: 34 },
+  menuItem: { borderWidth: 1, borderRadius: 12, paddingVertical: 16, width: 280, alignItems: 'center' },
+  menuText: { fontSize: 18, fontWeight: '600' },
 });

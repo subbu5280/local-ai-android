@@ -254,7 +254,7 @@ export async function isVisionInstalled(): Promise<boolean> {
 
 /** Download the image model (both files, one after the other). Only after the user said yes. */
 export async function downloadVision(onProgress: (fraction: number) => void, online = true): Promise<void> {
-  // Phase 14 storage rule (modelManager.storagePlan: download + max(3 GB, 15 % of storage) reserve), checked before
+  // Phase 14 storage rule (modelManager.storagePlan: download + max(3 GB, 5 % of storage) reserve), checked before
   // anything starts; download() still adds its own per-file check.
   const missing = [];
   for (const f of VISION_FILES) if (!(await isInstalled(f))) missing.push(f);

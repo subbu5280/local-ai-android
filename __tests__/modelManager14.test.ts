@@ -32,13 +32,15 @@ test('catalog: untrusted refreshed entries are rejected', () => {
   expect(validateCatalog({}).models).toEqual([]);
 });
 
-test('storage: the stricter of 3 GB and 15 % reserve; the documented example is rejected', () => {
-  // Free 8 GB, model 3 GB, reserve max(3 GB, 15 % of 20 GB = 3 GB) → requires 6 GB with an in-place .part rename.
+test('storage: the stricter of 3 GB and 5 % reserve (15 % refused a 0.5 GB model on the M35)', () => {
+  // Free 8 GB, model 3 GB, reserve max(3 GB, 5 % of 20 GB = 1 GB) → requires 6 GB with an in-place .part rename.
   expect(storagePlan({ bytes: 3 * GB }, { freeStorage: 8 * GB, totalStorage: 20 * GB })).toMatchObject({ required: 6 * GB, ok: true });
-  // 128 GB phone: 15 % (19.2 GB) is stricter than 3 GB.
-  const p = storagePlan({ bytes: 3 * GB }, { freeStorage: 20 * GB, totalStorage: 128 * GB });
-  expect(p.reserve).toBeCloseTo(19.2 * GB);
+  // 128 GB phone: 5 % (6.4 GB) is stricter than 3 GB.
+  const p = storagePlan({ bytes: 3 * GB }, { freeStorage: 9 * GB, totalStorage: 128 * GB });
+  expect(p.reserve).toBeCloseTo(6.4 * GB);
   expect(p.ok).toBe(false);
+  // The M35 case: 113 GB phone, 16.8 GB free, 0.5 GB model fits.
+  expect(storagePlan({ bytes: 0.49 * GB }, { freeStorage: 16.8 * GB, totalStorage: 113 * GB }).ok).toBe(true);
   expect(storagePlan({ bytes: 3 * GB }, { freeStorage: 5.9 * GB, totalStorage: 16 * GB }).ok).toBe(false);
 });
 
