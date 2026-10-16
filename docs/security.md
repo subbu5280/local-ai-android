@@ -49,10 +49,14 @@ reaches any `console` method, and `src/backup/` has no logging at all.
 
 ## Android configuration
 
-- **Permissions:**
-  - `INTERNET` and `ACCESS_NETWORK_STATE`, for the model download.
+- **Permissions** (updated after M14; the release check and `storage.test.ts` fail on any other):
+  - `INTERNET` and `ACCESS_NETWORK_STATE`: confirmed downloads, live questions you ask, MCP servers you add.
+  - `ACCESS_COARSE_LOCATION`: approximate location, asked only when you ask for "weather here"; never stored.
+  - `RECORD_AUDIO`: asked when you tap the microphone.
+  - `POST_NOTIFICATIONS`: asked when you schedule the first task (Android 13+).
+  - `RECEIVE_BOOT_COMPLETED`: re-arms scheduled-task alarms after a restart (normal permission, no prompt).
   - `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, added by AndroidX; signature-level and internal.
-  - No storage, media, camera, microphone or location permission.
+  - No storage, media or camera permission: the camera and gallery go through Android's own pickers.
   - `READ`/`WRITE_EXTERNAL_STORAGE` from react-native-fs are explicitly removed.
 - **Files:** documents, project folders and backups are reached only through the Storage Access Framework, for
   exactly what the user picks.
@@ -61,7 +65,12 @@ reaches any `console` method, and `src/backup/` has no logging at all.
   - **New in M8:** `android:dataExtractionRules`, which excludes every domain from cloud backup and from
     device-to-device transfer. On Android 12+ `allowBackup="false"` alone does not stop device-to-device transfer.
   - `fullBackupContent` excludes everything on Android 6–11.
-- **Exported components:** only the launcher activity. There are no WebViews, and release builds are not debuggable.
+- **Exported components:** the launcher activity, which also opens `localai://task/<id>` links from scheduled-task
+  notifications. Any app could open such a link, so it only puts the saved prompt in the message box; the user taps
+  Send. `BootReceiver` is exported only to receive `BOOT_COMPLETED`, a protected broadcast other apps cannot send.
+  `ScheduleReceiver` is not exported. There are no WebViews, and release builds are not debuggable.
+- **Network beyond downloads** (M11–M14): live questions go to Open-Meteo, CoinGecko and Google News RSS with only the
+  place or topic asked about; MCP calls go only to https servers you added, with only the arguments you confirmed.
 - **Signing:** see [release.md](release.md). By default release builds are still signed with the public debug key, as
   before. A real key is used only when the `LOCALAI_RELEASE_*` properties are set outside the repository. The
   release check prints which key was used.
