@@ -1,0 +1,71 @@
+{
+  "name": "retrieval",
+  "version": 1,
+  "description": "A small six-language corpus and queries with hand-labelled relevant documents. 'kind' says what each query probes. relevant: [] means the corpus has no answer (the system should report no evidence). Texts were written for this dataset (not copied from a source) and need native-speaker review.",
+  "documents": [
+    { "id": "refund-en", "name": "refund-policy.txt", "lang": "en",
+      "text": "Refund policy\n\nCustomers can request a refund within 30 days of purchase. The money is returned to the original payment method within 5 working days.\n\nItems must be unused and in the original box. Gift cards cannot be refunded." },
+    { "id": "refund-copy-en", "name": "refund-policy-2024.txt", "lang": "en",
+      "text": "Refund policy (2024 copy)\n\nCustomers can request a refund within 30 days of purchase. The money is returned to the original payment method within 5 working days.\n\nItems must be unused and in the original box. Gift cards cannot be refunded." },
+    { "id": "kafka-en", "name": "kafka-basics.md", "lang": "en",
+      "text": "# Kafka basics\n\nApache Kafka stores streams of records in topics. Each topic is split into partitions, and consumers read a partition in order.\n\nA consumer group shares the partitions of a topic so that each partition is read by one consumer of the group. Producers write records to topics." },
+    { "id": "wifi-en", "name": "wifi-setup.txt", "lang": "en",
+      "text": "Wi-Fi setup\n\nTo connect the router, open the settings page and enter the network name. Restart the router if the light is red." },
+    { "id": "train-hi", "name": "train-cancellation.txt", "lang": "hi",
+      "text": "ट्रेन टिकट रद्द करने के नियम\n\nकन्फर्म टिकट को ट्रेन छूटने से 48 घंटे पहले रद्द करने पर किराए का 75 प्रतिशत वापस मिलता है।\n\nतत्काल टिकट रद्द करने पर कोई पैसा वापस नहीं मिलता। रिफंड उसी खाते में आता है जिससे भुगतान किया गया था।" },
+    { "id": "rice-te", "name": "rice-farming.txt", "lang": "te",
+      "text": "వరి సాగు\n\nవర్షాకాలంలో రైతులు వరి నాట్లు వేస్తారు. పొలంలో ఎప్పుడూ కొంచెం నీరు నిలిచి ఉండాలి.\n\nనాటిన తర్వాత సుమారు నాలుగు నెలలకు పంట కోతకు వస్తుంది. ఎరువులను మూడు సార్లు వేయాలి." },
+    { "id": "diabetes-ta", "name": "diabetes-diet.txt", "lang": "ta",
+      "text": "நீரிழிவு உணவு முறை\n\nநீரிழிவு நோயாளிகள் வெள்ளை அரிசியை குறைத்து, கேழ்வரகு மற்றும் காய்கறிகளை அதிகம் சாப்பிட வேண்டும்.\n\nஇனிப்பு பானங்களை தவிர்க்கவும். தினமும் முப்பது நிமிடம் நடப்பது நல்லது." },
+    { "id": "library-kn", "name": "library-rules.txt", "lang": "kn",
+      "text": "ಗ್ರಂಥಾಲಯದ ನಿಯಮಗಳು\n\nಸದಸ್ಯರು ಒಂದು ಬಾರಿಗೆ ಮೂರು ಪುಸ್ತಕಗಳನ್ನು ಎರವಲು ಪಡೆಯಬಹುದು. ಪುಸ್ತಕಗಳನ್ನು ಹದಿನಾಲ್ಕು ದಿನಗಳಲ್ಲಿ ಹಿಂತಿರುಗಿಸಬೇಕು.\n\nತಡವಾದರೆ ದಿನಕ್ಕೆ ಐದು ರೂಪಾಯಿ ದಂಡ ವಿಧಿಸಲಾಗುತ್ತದೆ." },
+    { "id": "coconut-ml", "name": "coconut-farming.txt", "lang": "ml",
+      "text": "തെങ്ങ് കൃഷി\n\nവേനൽക്കാലത്ത് തെങ്ങിന് ആഴ്ചയിൽ രണ്ടു തവണ വെള്ളം ഒഴിക്കണം. ഒരു തെങ്ങിൽ നിന്ന് വർഷത്തിൽ ഏകദേശം എൺപത് തേങ്ങ ലഭിക്കും.\n\nതെങ്ങിന് വളം വർഷത്തിൽ രണ്ടു തവണ നൽകണം." },
+    { "id": "kafka-mixed-te", "name": "kafka-notes-telugu.txt", "lang": "te",
+      "text": "Kafka notes\n\nKafka లో topic అంటే records సమూహం. Partition లు ఉంటే consumers వేగంగా చదవగలరు." }
+  ],
+  "queries": [
+    { "id": "en-exact-refund", "kind": "exact", "lang": "en", "query": "How many days do I have to request a refund?", "relevant": ["refund-en", "refund-copy-en"] },
+    { "id": "en-exact-kafka", "kind": "exact", "lang": "en", "query": "How do consumer groups share partitions?", "relevant": ["kafka-en"] },
+    { "id": "hi-exact", "kind": "exact", "lang": "hi", "query": "तत्काल टिकट रद्द करने पर कितना पैसा वापस मिलता है?", "relevant": ["train-hi"] },
+    { "id": "te-exact", "kind": "exact", "lang": "te", "query": "వరి పంట ఎన్ని నెలలకు కోతకు వస్తుంది?", "relevant": ["rice-te"] },
+    { "id": "ta-exact", "kind": "exact", "lang": "ta", "query": "நீரிழிவு நோயாளிகள் எந்த அரிசியை குறைக்க வேண்டும்?", "relevant": ["diabetes-ta"] },
+    { "id": "kn-exact", "kind": "exact", "lang": "kn", "query": "ಎಷ್ಟು ಪುಸ್ತಕಗಳನ್ನು ಎರವಲು ಪಡೆಯಬಹುದು?", "relevant": ["library-kn"] },
+    { "id": "ml-exact", "kind": "exact", "lang": "ml", "query": "തെങ്ങിന് എത്ര തവണ വെള്ളം ഒഴിക്കണം?", "relevant": ["coconut-ml"] },
+
+    { "id": "te-inflected", "kind": "inflected", "lang": "te", "query": "రైతులకు వర్షాకాలం సలహా", "relevant": ["rice-te"] },
+    { "id": "ta-inflected", "kind": "inflected", "lang": "ta", "query": "நீரிழிவுக்கு உணவு", "relevant": ["diabetes-ta"] },
+    { "id": "kn-inflected", "kind": "inflected", "lang": "kn", "query": "ಗ್ರಂಥಾಲಯಕ್ಕೆ ಪುಸ್ತಕ ಹಿಂತಿರುಗಿಸುವುದು", "relevant": ["library-kn"] },
+    { "id": "ml-inflected", "kind": "inflected", "lang": "ml", "query": "തെങ്ങുകൾക്ക് വളം", "relevant": ["coconut-ml"] },
+    { "id": "hi-inflected", "kind": "inflected", "lang": "hi", "query": "टिकटों का रिफंड", "relevant": ["train-hi"] },
+
+    { "id": "en-para-money", "kind": "paraphrase", "lang": "en", "query": "Can I get my money back after buying something?", "relevant": ["refund-en", "refund-copy-en"] },
+    { "id": "en-para-card", "kind": "paraphrase", "lang": "en", "query": "How long until the refund reaches my card?", "relevant": ["refund-en", "refund-copy-en"] },
+    { "id": "hi-para", "kind": "paraphrase", "lang": "hi", "query": "कन्फर्म टिकट कैंसिल करने पर कितना वापस मिलेगा?", "relevant": ["train-hi"] },
+
+    { "id": "en-syn-reimburse", "kind": "synonym", "lang": "en", "query": "What is the reimbursement window?", "relevant": ["refund-en", "refund-copy-en"] },
+    { "id": "en-syn-readers", "kind": "synonym", "lang": "en", "query": "How are message logs divided among readers?", "relevant": ["kafka-en"] },
+    { "id": "en-syn-modem", "kind": "synonym", "lang": "en", "query": "What should I do when the modem shows a red lamp?", "relevant": ["wifi-en"] },
+
+    { "id": "xl-en-kn", "kind": "cross_language", "lang": "en", "query": "What is the late fine at the library?", "relevant": ["library-kn"] },
+    { "id": "xl-en-te", "kind": "cross_language", "lang": "en", "query": "How long does the rice crop take to harvest?", "relevant": ["rice-te"] },
+    { "id": "xl-te-en", "kind": "cross_language", "lang": "te", "query": "డబ్బు తిరిగి పొందడానికి ఎన్ని రోజులు ఉన్నాయి?", "relevant": ["refund-en", "refund-copy-en"] },
+    { "id": "xl-hi-ta", "kind": "cross_language", "lang": "hi", "query": "मधुमेह में क्या खाना चाहिए?", "relevant": ["diabetes-ta"] },
+    { "id": "xl-ta-ml", "kind": "cross_language", "lang": "ta", "query": "தென்னை மரத்திற்கு எவ்வளவு தண்ணீர் வேண்டும்?", "relevant": ["coconut-ml"] },
+    { "id": "xl-ml-hi", "kind": "cross_language", "lang": "ml", "query": "തത്കാൽ ടിക്കറ്റ് റദ്ദാക്കിയാൽ പണം തിരികെ കിട്ടുമോ?", "relevant": ["train-hi"] },
+
+    { "id": "mix-te", "kind": "mixed", "lang": "te", "query": "Kafka లో partition అంటే ఏమిటి?", "relevant": ["kafka-en", "kafka-mixed-te"] },
+    { "id": "mix-hi", "kind": "mixed", "lang": "hi", "query": "refund policy क्या है?", "relevant": ["refund-en", "refund-copy-en", "train-hi"] },
+    { "id": "mix-ml", "kind": "mixed", "lang": "ml", "query": "Kafka യിൽ consumer group എന്താണ്?", "relevant": ["kafka-en"] },
+
+    { "id": "ne-en", "kind": "no_evidence", "lang": "en", "query": "What is the boiling point of mercury?", "relevant": [] },
+    { "id": "ne-en-shared-word", "kind": "no_evidence", "lang": "en", "query": "Which days is the museum open?", "relevant": [] },
+    { "id": "ne-te", "kind": "no_evidence", "lang": "te", "query": "హైదరాబాద్ మెట్రో రైలు సమయాలు ఏమిటి?", "relevant": [] },
+    { "id": "ne-hi", "kind": "no_evidence", "lang": "hi", "query": "दिल्ली में आज मौसम कैसा है?", "relevant": [] },
+    { "id": "ne-ta", "kind": "no_evidence", "lang": "ta", "query": "சென்னையில் சிறந்த உணவகம் எது?", "relevant": [] },
+    { "id": "ne-kn", "kind": "no_evidence", "lang": "kn", "query": "ಬೆಂಗಳೂರಿನ ಜನಸಂಖ್ಯೆ ಎಷ್ಟು?", "relevant": [] },
+    { "id": "ne-ml", "kind": "no_evidence", "lang": "ml", "query": "കേരളത്തിലെ മുഖ്യമന്ത്രി ആരാണ്?", "relevant": [] },
+
+    { "id": "dup-refund", "kind": "duplicate", "lang": "en", "query": "refund within 30 days to the original payment method", "relevant": ["refund-en", "refund-copy-en"] }
+  ]
+}

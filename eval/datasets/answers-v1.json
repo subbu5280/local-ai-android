@@ -1,0 +1,42 @@
+{
+  "name": "answers",
+  "version": 1,
+  "description": "Model answer quality across the six languages, run on the phone (Agents > Model evaluation, or scripts/device-check.ps1 -Eval). 'chat' cases go through the normal chat prompt; 'docs' cases give the model fixed passages (document ids from retrieval-v1.json) through the Docs-mode prompt, so retrieval is not part of the test. Automated checks are deterministic and approximate (script share, citation numbers, keyword presence); correctness and faithfulness need a human reviewer.",
+  "cases": [
+    { "id": "en-explain", "lang": "en", "kind": "explain", "mode": "chat", "input": "Explain in two sentences what a database index is.", "mustMention": [["index"], ["fast", "quick", "speed", "faster"]] },
+    { "id": "en-multipart", "lang": "en", "kind": "multi_part", "mode": "chat", "input": "What is 12 times 12? And what is the capital of Japan?", "mustMention": [["144"], ["Tokyo"]] },
+    { "id": "en-summary", "lang": "en", "kind": "summarize", "mode": "chat", "input": "Summarize: The library is open from 9 am to 6 pm on weekdays. On Saturdays it closes at 1 pm. It is closed on Sundays and public holidays.", "mustMention": [["9"], ["Saturday"], ["Sunday"]] },
+    { "id": "en-docs", "lang": "en", "kind": "docs", "mode": "docs", "input": "How many days do I have to ask for a refund?", "passages": ["refund-en", "wifi-en"], "mustCite": true, "mustMention": [["30"]] },
+    { "id": "en-docs-missing", "lang": "en", "kind": "insufficient", "mode": "docs", "input": "Can I get a refund on a gift card after 60 days, and who approves it?", "passages": ["wifi-en", "kafka-en"], "expectNotFound": true },
+
+    { "id": "te-explain", "lang": "te", "kind": "explain", "mode": "chat", "input": "వర్షం ఎలా పడుతుందో సరళంగా వివరించండి.", "mustMention": [] },
+    { "id": "te-translate", "lang": "te", "kind": "translation", "mode": "chat", "input": "Translate 'Good morning, how are you?' to Telugu", "mustMention": [] },
+    { "id": "te-followup", "lang": "te", "kind": "follow_up", "mode": "chat", "history": [{ "role": "user", "content": "Kafka గురించి చెప్పండి", "lang": "te" }, { "role": "assistant", "content": "Kafka అనేది messages ని topics లో నిల్వ చేసే వ్యవస్థ." }], "input": "ok, ఇంకా చెప్పు", "mustMention": [] },
+    { "id": "te-docs", "lang": "te", "kind": "docs", "mode": "docs", "input": "వరి పంట ఎన్ని నెలలకు కోతకు వస్తుంది?", "passages": ["rice-te"], "mustCite": true, "mustMention": [["నాలుగు", "4"]] },
+    { "id": "te-docs-crosslang", "lang": "te", "kind": "cross_language", "mode": "docs", "input": "డబ్బు తిరిగి పొందడానికి ఎన్ని రోజులు ఉన్నాయి?", "passages": ["refund-en"], "mustCite": true, "mustMention": [["30", "ముప్పై"]] },
+
+    { "id": "hi-explain", "lang": "hi", "kind": "explain", "mode": "chat", "input": "सौर ऊर्जा क्या है? आसान भाषा में समझाइए।", "mustMention": [] },
+    { "id": "hi-roman", "lang": "hi", "kind": "mixed", "mode": "chat", "input": "Kafka kya hai mujhe simple mein samjhao", "mustMention": [["Kafka", "काफ्का"]] },
+    { "id": "hi-docs", "lang": "hi", "kind": "docs", "mode": "docs", "input": "तत्काल टिकट रद्द करने पर कितना पैसा वापस मिलता है?", "passages": ["train-hi"], "mustCite": true, "mustMention": [["नहीं", "कोई"]] },
+    { "id": "hi-docs-missing", "lang": "hi", "kind": "insufficient", "mode": "docs", "input": "वेटिंग टिकट रद्द करने का शुल्क कितना है?", "passages": ["rice-te", "kafka-en"], "expectNotFound": true },
+    { "id": "hi-multipart", "lang": "hi", "kind": "multi_part", "mode": "chat", "input": "भारत की राजधानी क्या है? और 15 + 27 कितना होता है?", "mustMention": [["दिल्ली", "Delhi"], ["42", "४२"]] },
+
+    { "id": "ta-explain", "lang": "ta", "kind": "explain", "mode": "chat", "input": "இணையம் எப்படி வேலை செய்கிறது? எளிமையாக சொல்லுங்கள்.", "mustMention": [] },
+    { "id": "ta-switch", "lang": "ta", "kind": "language_switch", "mode": "chat", "history": [{ "role": "user", "content": "What is Python?", "lang": "en" }, { "role": "assistant", "content": "Python is a programming language." }], "input": "Tamil la sollu", "mustMention": [] },
+    { "id": "ta-docs", "lang": "ta", "kind": "docs", "mode": "docs", "input": "நீரிழிவு நோயாளிகள் எதை தவிர்க்க வேண்டும்?", "passages": ["diabetes-ta"], "mustCite": true, "mustMention": [["இனிப்பு", "வெள்ளை அரிசி"]] },
+    { "id": "ta-docs-crosslang", "lang": "ta", "kind": "cross_language", "mode": "docs", "input": "தென்னை மரத்திற்கு வாரத்தில் எத்தனை முறை தண்ணீர் ஊற்ற வேண்டும்?", "passages": ["coconut-ml"], "mustCite": true, "mustMention": [["இரண்டு", "2"]] },
+    { "id": "ta-docs-missing", "lang": "ta", "kind": "insufficient", "mode": "docs", "input": "நீரிழிவு நோய்க்கு எந்த மருந்து சிறந்தது?", "passages": ["diabetes-ta"], "expectNotFound": true },
+
+    { "id": "kn-explain", "lang": "kn", "kind": "explain", "mode": "chat", "input": "ಸೂರ್ಯ ಗ್ರಹಣ ಎಂದರೇನು? ಸರಳವಾಗಿ ಹೇಳಿ.", "mustMention": [] },
+    { "id": "kn-docs", "lang": "kn", "kind": "docs", "mode": "docs", "input": "ಪುಸ್ತಕಗಳನ್ನು ಎಷ್ಟು ದಿನಗಳಲ್ಲಿ ಹಿಂತಿರುಗಿಸಬೇಕು?", "passages": ["library-kn"], "mustCite": true, "mustMention": [["ಹದಿನಾಲ್ಕು", "14"]] },
+    { "id": "kn-docs-crosslang", "lang": "en", "kind": "cross_language", "mode": "docs", "input": "What is the late fine at the library?", "passages": ["library-kn"], "mustCite": true, "mustMention": [["5", "five"]] },
+    { "id": "kn-roman", "lang": "kn", "kind": "mixed", "mode": "chat", "input": "Kafka bagge swalpa heli", "mustMention": [] },
+    { "id": "kn-followup", "lang": "kn", "kind": "follow_up", "mode": "chat", "history": [{ "role": "user", "content": "ಮಳೆ ಹೇಗೆ ಬರುತ್ತದೆ?", "lang": "kn" }, { "role": "assistant", "content": "ನೀರು ಆವಿಯಾಗಿ ಮೋಡಗಳಾಗುತ್ತವೆ." }], "input": "ok", "mustMention": [] },
+
+    { "id": "ml-explain", "lang": "ml", "kind": "explain", "mode": "chat", "input": "സോളാർ പാനൽ എങ്ങനെ പ്രവർത്തിക്കുന്നു? ലളിതമായി പറയൂ.", "mustMention": [] },
+    { "id": "ml-docs", "lang": "ml", "kind": "docs", "mode": "docs", "input": "ഒരു തെങ്ങിൽ നിന്ന് വർഷത്തിൽ എത്ര തേങ്ങ ലഭിക്കും?", "passages": ["coconut-ml"], "mustCite": true, "mustMention": [["എൺപത്", "80"]] },
+    { "id": "ml-docs-missing", "lang": "ml", "kind": "insufficient", "mode": "docs", "input": "തെങ്ങിന് ഏത് രോഗം ഏറ്റവും അപകടകരമാണ്?", "passages": ["coconut-ml"], "expectNotFound": true },
+    { "id": "ml-translate", "lang": "ml", "kind": "translation", "mode": "chat", "input": "Translate 'Thank you very much' into Malayalam", "mustMention": [] },
+    { "id": "ml-roman", "lang": "ml", "kind": "mixed", "mode": "chat", "input": "Kafka ne kurichu onnu parayu", "mustMention": [] }
+  ]
+}

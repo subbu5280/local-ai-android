@@ -1,0 +1,38 @@
+# Node
+node_modules/
+npm-debug.log
+
+# Android build output
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+*.hprof
+*.keystore
+!debug.keystore
+# llama.rn copies these at build time (Qualcomm Hexagon DSP libs)
+android/app/src/main/assets/ggml-hexagon/
+
+# Metro / Jest
+.metro-health-check*
+*.jsbundle
+/coverage
+
+# Private data: never commit models, databases or secrets
+*.gguf
+*.db
+.env
+
+# Device-check evidence (screen dumps contain chat text)
+verification/runs/
+
+# Evaluation outputs (regenerate with npm run eval) and downloaded evaluation models
+eval/results/*.json
+eval/.cache/
+
+# M8: encrypted backups and release signing material never belong in the repository
+*.laibackup
+*.jks
+keystore.properties

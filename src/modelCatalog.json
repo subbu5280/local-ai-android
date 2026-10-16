@@ -1,0 +1,154 @@
+[
+  {
+    "id": "qwen2.5-1.5b-instruct-q4_k_m",
+    "name": "Qwen2.5 1.5B Instruct (Q4_K_M)",
+    "paramsB": 1.54,
+    "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+    "sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+    "bytes": 1117320736,
+    "chatCapable": true,
+    "supported": true,
+    "provider": "llama.rn",
+    "capability": "text",
+    "family": "qwen2.5",
+    "architecture": "qwen2",
+    "version": "2.5",
+    "quantization": "Q4_K_M",
+    "contextLength": 32768,
+    "platforms": [
+      "android-arm64"
+    ],
+    "license": "apache-2.0",
+    "languages": {
+      "en": "good",
+      "hi": "fair",
+      "te": "poor",
+      "kn": "poor",
+      "ta": "poor"
+    },
+    "qualityScore": 56.64,
+    "qualitySource": "Qwen2.5 blog: 50.7, 55.2, 73.2, 61.6, 42.5"
+  },
+  {
+    "id": "qwen2.5-3b-instruct-q4_k_m",
+    "name": "Qwen2.5 3B Instruct (Q4_K_M)",
+    "paramsB": 3.09,
+    "url": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf",
+    "sha256": "626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d",
+    "bytes": 2104932768,
+    "chatCapable": true,
+    "supported": true,
+    "provider": "llama.rn",
+    "capability": "text",
+    "family": "qwen2.5",
+    "architecture": "qwen2",
+    "version": "2.5",
+    "quantization": "Q4_K_M",
+    "contextLength": 32768,
+    "platforms": [
+      "android-arm64"
+    ],
+    "license": "Qwen Research License (non-commercial)",
+    "languages": {
+      "en": "good",
+      "hi": "fair",
+      "te": "poor",
+      "kn": "poor",
+      "ta": "poor"
+    },
+    "qualityScore": 69.92,
+    "qualitySource": "Qwen2.5 blog: 64.4, 65.9, 86.7, 74.4, 58.2"
+  },
+  {
+    "id": "qwen2.5-0.5b-instruct-q4_k_m",
+    "name": "Qwen2.5 0.5B Instruct (Q4_K_M)",
+    "paramsB": 0.49,
+    "url": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+    "bytes": 491400032,
+    "chatCapable": true,
+    "supported": true,
+    "provider": "llama.rn",
+    "capability": "text",
+    "family": "qwen2.5",
+    "architecture": "qwen2",
+    "version": "2.5",
+    "quantization": "Q4_K_M",
+    "contextLength": 32768,
+    "platforms": [
+      "android-arm64"
+    ],
+    "license": "apache-2.0",
+    "languages": {
+      "en": "fair",
+      "hi": "poor",
+      "te": "poor",
+      "kn": "poor",
+      "ta": "poor"
+    },
+    "qualityScore": 34.28,
+    "qualitySource": "Qwen2.5 blog: 24.1, 34.4, 49.6, 35.4, 27.9"
+  },
+  {
+    "id": "qwen3-1.7b-q8_0",
+    "name": "Qwen3 1.7B (Q8_0)",
+    "paramsB": 1.72,
+    "url": "https://huggingface.co/Qwen/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q8_0.gguf",
+    "sha256": "061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a",
+    "bytes": 1834426016,
+    "chatCapable": true,
+    "supported": false,
+    "provider": "llama.rn",
+    "capability": "text",
+    "family": "qwen3",
+    "architecture": "qwen3",
+    "version": "3",
+    "quantization": "Q8_0",
+    "contextLength": 32768,
+    "platforms": [
+      "android-arm64"
+    ],
+    "license": "apache-2.0",
+    "languages": {
+      "en": "good",
+      "hi": "unknown",
+      "te": "unknown",
+      "kn": "unknown",
+      "ta": "unknown"
+    },
+    "qualityScore": null,
+    "qualitySource": "different benchmark suite (not comparable)",
+    "notes": "Hybrid thinking model: on the laptop the Qwen3 family kept \"thinking\" without answering; not supported until verified."
+  },
+  {
+    "id": "gemma-3-1b-it-q4_k_m",
+    "name": "Gemma 3 1B IT (Q4_K_M)",
+    "paramsB": 1,
+    "url": "https://huggingface.co/unsloth/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q4_K_M.gguf",
+    "sha256": "8270790f3ab69fdfe860b7b64008d9a19986d8df7e407bb018184caa08798ebd",
+    "bytes": 806058272,
+    "chatCapable": true,
+    "supported": false,
+    "provider": "llama.rn",
+    "capability": "text",
+    "family": "gemma3",
+    "architecture": "gemma3",
+    "version": "3",
+    "quantization": "Q4_K_M",
+    "contextLength": 32768,
+    "platforms": [
+      "android-arm64"
+    ],
+    "license": "gemma",
+    "languages": {
+      "en": "good",
+      "hi": "unknown",
+      "te": "unknown",
+      "kn": "unknown",
+      "ta": "unknown"
+    },
+    "qualityScore": null,
+    "qualitySource": "different benchmark suite (not comparable)",
+    "notes": "Not yet validated with llama.rn on this app build."
+  }
+]

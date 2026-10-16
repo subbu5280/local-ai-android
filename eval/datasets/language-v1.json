@@ -1,0 +1,56 @@
+{
+  "name": "language",
+  "version": 1,
+  "description": "Response-language decisions for single messages. 'previous' is the conversation's language before the message (null = new chat). 'expect' is the language the answer should be in. Cases marked 'hard' probe known weak spots; all expectations were written by hand and should be reviewed by native speakers.",
+  "cases": [
+    { "id": "en-plain", "input": "Explain Kafka simply.", "previous": null, "expect": "en" },
+    { "id": "en-question", "input": "What is the capital of France?", "previous": null, "expect": "en" },
+    { "id": "en-language-name", "input": "Is Telugu hard to learn?", "previous": null, "expect": "en" },
+    { "id": "en-one-telugu-word", "input": "What does the word హైదరాబాద్ mean?", "previous": null, "expect": "en", "hard": true },
+    { "id": "en-one-hindi-word", "input": "Please explain what नमस्ते means and when to use it.", "previous": null, "expect": "en", "hard": true },
+    { "id": "en-quote-tamil", "input": "My friend wrote வணக்கம் in a message, what is that greeting?", "previous": null, "expect": "en", "hard": true },
+
+    { "id": "te-script", "input": "నాకు Kafka గురించి చెప్పండి", "previous": null, "expect": "te" },
+    { "id": "te-script-mixed", "input": "ఈ Kafka architecture ని simple గా explain చేయండి", "previous": null, "expect": "te" },
+    { "id": "te-pure", "input": "వర్షాకాలంలో వరి ఎలా పండిస్తారు?", "previous": null, "expect": "te" },
+    { "id": "te-roman", "input": "Naaku Kafka gurinchi simple ga cheppu", "previous": null, "expect": "te" },
+
+    { "id": "hi-script", "input": "मुझे Kafka के बारे में बताइए", "previous": null, "expect": "hi" },
+    { "id": "hi-pure", "input": "ट्रेन टिकट कैसे रद्द करें?", "previous": null, "expect": "hi" },
+    { "id": "hi-roman", "input": "Train ticket cancel kaise kare mujhe batao", "previous": null, "expect": "hi" },
+
+    { "id": "ta-script", "input": "Kafka பற்றி சொல்லுங்கள்", "previous": null, "expect": "ta" },
+    { "id": "ta-pure", "input": "நீரிழிவு நோய்க்கு என்ன சாப்பிடலாம்?", "previous": null, "expect": "ta" },
+    { "id": "ta-roman", "input": "Kafka pathi konjam sollunga", "previous": null, "expect": "ta", "hard": true },
+
+    { "id": "kn-script", "input": "Kafka ಬಗ್ಗೆ ಹೇಳಿ", "previous": null, "expect": "kn" },
+    { "id": "kn-pure", "input": "ಗ್ರಂಥಾಲಯದಿಂದ ಎಷ್ಟು ಪುಸ್ತಕಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಬಹುದು?", "previous": null, "expect": "kn" },
+    { "id": "kn-roman", "input": "Kafka bagge swalpa heli", "previous": null, "expect": "kn", "hard": true },
+
+    { "id": "ml-script", "input": "Kafka യെ കുറിച്ച് പറയൂ", "previous": null, "expect": "ml" },
+    { "id": "ml-pure", "input": "തെങ്ങിന് എത്ര വെള്ളം വേണം?", "previous": null, "expect": "ml" },
+    { "id": "ml-roman", "input": "Kafka ne kurichu onnu parayu", "previous": null, "expect": "ml", "hard": true },
+
+    { "id": "follow-ok-te", "input": "ok", "previous": "te", "expect": "te" },
+    { "id": "follow-thanks-ta", "input": "thanks!", "previous": "ta", "expect": "ta" },
+    { "id": "follow-emoji-ml", "input": "👍", "previous": "ml", "expect": "ml" },
+    { "id": "follow-number-kn", "input": "2", "previous": "kn", "expect": "kn" },
+    { "id": "follow-hmm-hi", "input": "hmm", "previous": "hi", "expect": "hi" },
+    { "id": "follow-ok-en", "input": "ok", "previous": "en", "expect": "en" },
+    { "id": "follow-english-sentence", "input": "What is Python and why is it popular?", "previous": "te", "expect": "en" },
+    { "id": "follow-native-te", "input": "ఇంకా వివరంగా చెప్పు", "previous": "en", "expect": "te" },
+
+    { "id": "switch-en", "input": "Explain this in English", "previous": "te", "expect": "en" },
+    { "id": "switch-en-please", "input": "answer in english please", "previous": "hi", "expect": "en" },
+    { "id": "switch-te", "input": "Reply in Telugu", "previous": "en", "expect": "te" },
+    { "id": "switch-te-native", "input": "తెలుగులో చెప్పు", "previous": "en", "expect": "te" },
+    { "id": "switch-te-roman", "input": "telugu lo cheppu", "previous": "en", "expect": "te" },
+    { "id": "switch-hi-native", "input": "हिंदी में बताओ", "previous": "en", "expect": "hi" },
+    { "id": "switch-ta-roman", "input": "Tamil la sollu", "previous": "en", "expect": "ta", "hard": true },
+    { "id": "switch-ta-native", "input": "தமிழில் சொல்லுங்கள்", "previous": "en", "expect": "ta" },
+    { "id": "switch-kn-roman", "input": "kannada alli heli", "previous": "en", "expect": "kn", "hard": true },
+    { "id": "switch-ml-roman", "input": "malayalam il parayu", "previous": "en", "expect": "ml", "hard": true },
+    { "id": "switch-ml-to", "input": "Switch to Malayalam", "previous": "en", "expect": "ml" },
+    { "id": "translate-to-te", "input": "Translate 'good morning' to Telugu", "previous": null, "expect": "te" }
+  ]
+}
