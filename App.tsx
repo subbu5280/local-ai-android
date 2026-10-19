@@ -63,6 +63,7 @@ import * as memory from './src/memoryCommands';
 import * as schedule from './src/schedule';
 import * as learning from './src/learning';
 import { GamesScreen } from './src/GamesScreen';
+import { Markdown } from './src/Markdown';
 import { answerTableQuestion } from './src/knowledge/tables';
 import { gameRequest, Interactive } from './src/Games';
 import { McpScreen } from './src/McpScreen';
@@ -87,6 +88,7 @@ type Msg = {
   prompt?: string; // M12: what the model received for this user message, when it differs from the text
   links?: live.LiveSource[]; // a live answer (weather, news, prices): the web pages it came from
   game?: any; // an allow-listed game spec shown inside the chat (Games.tsx), like the original app
+  speed?: string; // "⚡ 10.6 tok/s" under a model answer (shown, not stored)
 };
 /** Screens opened over the chat; the chat is underneath (an empty stack). */
 type Screen = { name: 'history' } | { name: 'knowledge'; select?: boolean } | { name: 'document'; id: string; ordinal?: number }
@@ -185,6 +187,10 @@ function Chat({ dark }: { dark: boolean }) {
   const add = (m: Omit<Msg, 'id'>, id = chat.newId()) => {
     setMsgs(prev => [...prev, { ...m, id }]);
     return id;
+  };
+  /** The measured generation speed under an answer, like the live badge in other on-device AI apps. */
+  const showSpeed = (id: string, r: { tokPerSec: number; tokens: number }) => {
+    if (r.tokens > 0) setMsgs(prev => prev.map(m => (m.id === id ? { ...m, speed: `⚡ ${r.tokPerSec.toFixed(1)} tok/s · ${r.tokens} tokens` } : m)));
   };
   const patch = (id: string, text: string) => setMsgs(prev => prev.map(m => (m.id === id ? { ...m, text } : m)));
 
@@ -363,6 +369,7 @@ function Chat({ dark }: { dark: boolean }) {
       const r = await local.describeImage(text, img.preview, t => patch(answerId, t));
       patch(answerId, r.text || '(no answer)');
       metric('image_answer', { totalMs: r.totalMs, tokens: r.tokens, tokPerSec: Number(r.tokPerSec.toFixed(2)) });
+      showSpeed(answerId, r);
       if (r.text) await save('assistant', r.text, lang, answerId);
     } catch (e: any) {
       setMsgs(prev => prev.map(m => (m.id === answerId ? { ...m, role: 'error', text: `The image model couldn't look at this photo (${e?.message ?? e}).` } : m)));
@@ -691,6 +698,7 @@ function Chat({ dark }: { dark: boolean }) {
 ${caution}` : r.text || '(no answer)');
       metric('answer', { lang, intent, complexity, promptMs: Math.round(r.promptMs), firstTokenMs: r.firstTokenMs,
         totalMs: r.totalMs, tokens: r.tokens, tokPerSec: Number(r.tokPerSec.toFixed(2)), stopped: stopRequested.current });
+      showSpeed(answerId, r);
       if (r.text) await save('assistant', r.text, lang, answerId);
       // Follow the conversation's language for the mic only when it is certain (native script or an explicit request).
       const lg = detect(text, previousLanguage(msgs));
@@ -750,6 +758,7 @@ ${caution}` : r.text || '(no answer)');
       update({ text: r.text || '(no answer)', sources, note: conflict ? `${DOC_NOTE[answerStatus]}. ${conflict}` : DOC_NOTE[answerStatus] });
       metric('knowledge_answer', { status: answerStatus, lang, passages: chosen.length, cited: cited.length, firstTokenMs: r.firstTokenMs,
         totalMs: r.totalMs, tokens: r.tokens, tokPerSec: Number(r.tokPerSec.toFixed(2)), stopped: stopRequested.current });
+      showSpeed(answerId, r);
       if (r.text) await save('assistant', r.text, lang, answerId, { sources, docs: { status: answerStatus } });
     } catch (e: any) {
       metric('answer_failed', { error: String(e?.message ?? e).slice(0, 120) });
@@ -902,7 +911,10 @@ ${caution}` : r.text || '(no answer)');
           renderItem={({ item }) => (
             <View style={[styles.bubble, item.role === 'user' ? [styles.mine, { backgroundColor: c.mine }]
               : { backgroundColor: item.role === 'error' ? c.errorBg : c.bubble }]}>
-              <Text selectable style={{ color: item.role === 'user' ? '#fff' : c.text }}>{item.text}</Text>
+              {item.role === 'assistant'
+                ? <Markdown text={item.text} colors={c} onCopy={code => copyText(code, 'Code copied')} />
+                : <Text selectable style={{ color: item.role === 'user' ? '#fff' : c.text }}>{item.text}</Text>}
+              {item.speed ? <Text style={[styles.speed, { color: c.muted }]}>{item.speed}</Text> : null}
               {item.game && <Interactive spec={item.game} color={{ text: c.text, muted: c.muted, accent: c.accent, card: c.bg }} />}
               {item.note ? <Text style={[styles.note, { color: c.muted }]}>{item.note}</Text> : null}
               {item.prompt && (
@@ -928,11 +940,6 @@ ${caution}` : r.text || '(no answer)');
                   <Pressable accessibilityRole="button" hitSlop={10} accessibilityLabel="Copy this message" onPress={() => copyText(item.text)}>
                     <Text style={[styles.source, { color: item.role === 'user' ? '#ffffff' : c.accent }]}>⧉ Copy</Text>
                   </Pressable>
-                  {codeBlocks(item.text).length > 0 && (
-                    <Pressable accessibilityRole="button" hitSlop={10} accessibilityLabel="Copy code" onPress={() => copyText(codeBlocks(item.text).join('\n\n'), 'Code copied')}>
-                      <Text style={[styles.source, { color: c.accent }]}>{'</>'} Copy code</Text>
-                    </Pressable>
-                  )}
                   <Pressable accessibilityRole="button" hitSlop={10} accessibilityLabel="Reply to this message" onPress={() => setReplyingTo({ role: item.role, text: item.text })}>
                     <Text style={[styles.source, { color: item.role === 'user' ? '#ffffff' : c.accent }]}>↩ Reply</Text>
                   </Pressable>
@@ -1120,6 +1127,7 @@ const styles = StyleSheet.create({
   note: { fontSize: 12, marginTop: 6 },
   source: { fontSize: 13, marginTop: 4 },
   actions: { flexDirection: 'row', gap: 16 },
+  speed: { fontSize: 11, alignSelf: 'flex-end', marginTop: 4 },
   docsBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 8 },
   link: { fontWeight: '600' },
   promptBox: { minHeight: 140, maxHeight: 320, borderRadius: 8, textAlignVertical: 'top' },
