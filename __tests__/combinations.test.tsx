@@ -288,3 +288,15 @@ test('Memory screen: standing instructions reach the model; a secret is refused;
   await a.say('Explain Kafka partitions');
   expect(calls('chat').at(-1)!.system).toContain("The user's standing instructions: Answer in short points. I am learning OAuth authentication.");
 });
+
+test('welcome: shown on the first start only; "Get the model" opens the normal download confirmation', async () => {
+  mockEnv.modelInstalled = false;
+  let a = await mount();
+  await a.tap('Next');
+  await a.tap('Next');
+  await a.tap('Get the model');
+  expect(Alert.alert).toHaveBeenCalledWith(expect.stringMatching(/download/i), expect.anything(), expect.anything()); // asks first
+  await ReactTestRenderer.act(async () => { mounted.splice(0).forEach(r => r.unmount()); });
+  a = await mount();
+  expect(a.r.root.findAll(n => n.props.accessibilityLabel === 'Skip welcome').length).toBe(0); // seen once, not again
+});

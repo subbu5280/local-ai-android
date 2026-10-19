@@ -65,6 +65,7 @@ import * as learning from './src/learning';
 import { GamesScreen } from './src/GamesScreen';
 import { Markdown } from './src/Markdown';
 import { loadInstructions, MemoryScreen } from './src/MemoryScreen';
+import { welcomeSeen, WelcomeScreen } from './src/WelcomeScreen';
 import { answerTableQuestion } from './src/knowledge/tables';
 import { gameRequest, Interactive } from './src/Games';
 import { McpScreen } from './src/McpScreen';
@@ -157,10 +158,12 @@ function Chat({ dark }: { dark: boolean }) {
   const [docs, setDocs] = useState<DocsMode>({ on: false, scope: null });
   // Docs mode and its scope survive Android closing the app (seen on the M35): kept in the meta table. Removed
   // documents are dropped from a restored scope; an empty scope means all documents.
+  const [welcome, setWelcome] = useState(false); // first-run welcome pages, shown once
   const docsLoaded = useRef(false);
   useEffect(() => {
     (async () => {
       await chat.open();
+      if (!(await welcomeSeen())) setWelcome(true);
       await loadInstructions();
       const row = (await chat.db().query("SELECT value FROM meta WHERE key = 'docs_mode'"))[0];
       if (row) {
@@ -1080,6 +1083,7 @@ ${caution}` : r.text || '(no answer)');
           </View>
         </View>
       </Modal>
+      {welcome && <WelcomeScreen colors={c} needsModel={status === 'missing'} onDone={get => { setWelcome(false); if (get) getModel(); }} />}
     </SafeAreaView>
   );
 }
