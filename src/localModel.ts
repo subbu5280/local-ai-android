@@ -12,6 +12,7 @@ export type LocalModel = {
   bytes: number; // download size
   chatCapable: boolean;
   supported: boolean; // runtime support on this app build (llama.rn GGUF, arm64)
+  ext?: string; // file extension when not "gguf" (the image decoder is a .safetensors file)
 };
 
 // Phase 9 registry of supported on-device models. The app never auto-installs; the user confirms each download.
@@ -73,7 +74,7 @@ export const N_THREADS = 4;
 const N_CTX = 2048;
 
 const dir = `${RNFS.DocumentDirectoryPath}/models`;
-const file = (m: LocalModel) => `${dir}/${m.id}.gguf`;
+const file = (m: LocalModel) => `${dir}/${m.id}.${m.ext ?? 'gguf'}`;
 /** Where a model file lives once downloaded (app-private storage). */
 export const modelPath = file;
 const marker = (m: LocalModel) => `${file(m)}.verified`;
@@ -303,6 +304,51 @@ export async function downloadVision(onProgress: (fraction: number) => void, onl
     done += f.bytes;
   }
 }
+
+// On-device image generation (stable-diffusion.cpp, android/sdjni): SD-Turbo makes a 512x512 image in one step; the
+// tiny TAESD decoder turns it into pixels (laptop: 38 s -> 7.5 s per image, near-identical result). Downloaded only
+// after the user agrees; each file is SHA-256-checked like every other model.
+export const IMAGE_GEN_MODEL: LocalModel = {
+  id: 'sd-turbo-f16-q8_0', name: 'SD-Turbo (image generation)', paramsB: 1.3,
+  url: 'https://huggingface.co/Green-Sky/SD-Turbo-GGUF/resolve/main/sd_turbo-f16-q8_0.gguf',
+  sha256: 'd50be7655f0a554cf8041c145d88b210bd5f3c545423119dee62ae08cae51580', bytes: 2023745376, chatCapable: false, supported: true,
+};
+export const IMAGE_GEN_DECODER: LocalModel = {
+  id: 'taesd', name: 'TAESD decoder', paramsB: 0.01, ext: 'safetensors',
+  url: 'https://huggingface.co/madebyollin/taesd/resolve/main/diffusion_pytorch_model.safetensors',
+  sha256: 'db169d69145ec4ff064e49d99c95fa05d3eb04ee453de35824a6d0f325513549', bytes: 9793292, chatCapable: false, supported: true,
+};
+export const IMAGE_GEN_FILES = [IMAGE_GEN_MODEL, IMAGE_GEN_DECODER];
+export const IMAGE_GEN_BYTES = IMAGE_GEN_FILES.reduce((n, f) => n + f.bytes, 0);
+export const IMAGE_GEN_LICENSE = 'SD-Turbo: Stability AI Non-Commercial Research Community License (personal use only). TAESD: MIT.';
+
+/** Whether this build has the image engine (android/sdjni). */
+export async function imageGenAvailable(): Promise<boolean> {
+  try { return !!(await NativeModules.AiImage?.available()); } catch { return false; }
+}
+export async function isImageGenInstalled(): Promise<boolean> {
+  for (const f of IMAGE_GEN_FILES) if (!(await isInstalled(f))) return false;
+  return true;
+}
+/** Download the image-generation files (only after the user agreed). */
+export async function downloadImageGen(onProgress: (fraction: number) => void, online = true): Promise<void> {
+  let done = 0;
+  for (const f of IMAGE_GEN_FILES) {
+    if (!(await isInstalled(f))) await download(f, p => onProgress((done + p * f.bytes) / IMAGE_GEN_BYTES), online);
+    done += f.bytes;
+  }
+}
+
+/** Make one image. The chat model is released first (both would not fit in memory); reload it with load() afterwards. */
+export function generateImage(prompt: string, seed = Math.floor(Math.random() * 2 ** 31)): Promise<{ path: string; ms: number }> {
+  return exclusive(async () => {
+    ctx = null;
+    visionCtx = null;
+    await releaseAll();
+    return NativeModules.AiImage.generate(file(IMAGE_GEN_MODEL), file(IMAGE_GEN_DECODER), prompt, 512, 512, 1, seed);
+  });
+}
+export const cancelImage = () => NativeModules.AiImage?.cancel();
 
 /** Load the image model (this releases the text model; reload it with load() afterwards). */
 export function loadVision(): Promise<LoadInfo> {

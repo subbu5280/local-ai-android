@@ -381,3 +381,24 @@ test('a wrong guess is easy to undo: "Ask the model instead" sends the same ques
   const [c] = await chat.listConversations(1);
   expect((await chat.recentMessages(c.id, 1))[0].content).toBe('model answer');
 });
+
+test('"/image …" makes a picture on the phone: shown in chat and kept in history; the chat model is reloaded after', async () => {
+  NativeModules.AiImage = { available: jest.fn(async () => true), generate: jest.fn(async () => ({ path: '/data/files/images/img-1.png', ms: 41000 })), cancel: jest.fn() };
+  jest.spyOn(local, 'isImageGenInstalled').mockResolvedValue(true); // downloaded earlier (the download path is shared, tested elsewhere)
+  const a = await mount();
+  const loads = (require('llama.rn').initLlama as jest.Mock).mock.calls.length;
+  await a.type('/image a red fox in snow');
+  await a.tap('Send');
+  await settle(400); // file checks + generation take several async steps
+  const [conv] = await chat.listConversations(1);
+  expect((await chat.recentMessages(conv.id, 1))[0].content).toBe('Here\'s "a red fox in snow", made on this phone in 41 s.');
+  expect(NativeModules.AiImage.generate).toHaveBeenCalledWith(expect.stringMatching(/sd-turbo-f16-q8_0\.gguf$/), expect.stringMatching(/taesd\.safetensors$/),
+    'a red fox in snow', 512, 512, 1, expect.any(Number));
+  expect(a.r.root.findAll((n: any) => n.props.source?.uri === 'file:///data/files/images/img-1.png').length).toBeGreaterThan(0);
+  await settle(100);
+  expect((require('llama.rn').initLlama as jest.Mock).mock.calls.length).toBeGreaterThan(loads); // chat model back
+  expect(calls('chat')).toEqual([]); // the picture never came from the chat model
+  const [c] = await chat.listConversations(1);
+  expect((await chat.recentMessages(c.id, 1))[0].meta.picture).toBe('/data/files/images/img-1.png');
+  delete NativeModules.AiImage;
+});

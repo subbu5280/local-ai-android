@@ -1,0 +1,15 @@
+// Optional on-device image generation (stable-diffusion.cpp), as a separate library so the app's own native build is
+// untouched. settings.gradle includes this module only when scripts/fetch-sdcpp.ps1 has fetched the source.
+apply plugin: "com.android.library"
+
+android {
+    namespace "com.subbu.localai.sdjni"
+    compileSdk rootProject.ext.compileSdkVersion
+    ndkVersion rootProject.ext.ndkVersion
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        externalNativeBuild { cmake { cppFlags "-O3"; arguments "-DANDROID_STL=c++_shared" } }
+        ndk { abiFilters "arm64-v8a", "x86_64" }
+    }
+    externalNativeBuild { cmake { path "src/main/cpp/CMakeLists.txt"; version "3.22.1" } }
+}

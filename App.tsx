@@ -64,6 +64,7 @@ import * as schedule from './src/schedule';
 import * as learning from './src/learning';
 import { GamesScreen } from './src/GamesScreen';
 import { Markdown } from './src/Markdown';
+import { imageRequest } from './src/imageGen';
 import { deviceAnswer, deviceAsk, type DeviceAsk } from './src/deviceInfo';
 import { classifyNeed, worthClassifying, type Need } from './src/needClassifier';
 import { loadInstructions, MemoryScreen } from './src/MemoryScreen';
@@ -93,6 +94,7 @@ type Msg = {
   links?: live.LiveSource[]; // a live answer (weather, news, prices): the web pages it came from
   game?: any; // an allow-listed game spec shown inside the chat (Games.tsx), like the original app
   speed?: string; // "⚡ 10.6 tok/s" under a model answer (shown, not stored)
+  picture?: string; // a generated image file (on this phone), shown in the bubble
   guessed?: string; // routed by the model's guess (needClassifier): the question, for "Ask the model instead"
 };
 /** Screens opened over the chat; the chat is underneath (an empty stack). */
@@ -119,6 +121,7 @@ const toMsg = (r: chat.StoredMessage): Msg => ({
   links: Array.isArray(r.meta.links) && r.meta.links.length ? r.meta.links as live.LiveSource[] : undefined,
   prompt: typeof r.meta.prompt === 'string' ? r.meta.prompt : undefined,
   game: r.meta.interactive ?? undefined, // Interactive renders only allow-listed game kinds
+  picture: typeof r.meta.picture === 'string' ? r.meta.picture : undefined,
 });
 
 /** The voice status line shown above the composer ('' = nothing to show). From the original app (Phase 14). */
@@ -539,6 +542,15 @@ function Chat({ dark }: { dark: boolean }) {
       add({ role: 'assistant', text: await scheduleReply(sc) });
       return;
     }
+    // 2a'. "Draw a fox in snow" / "/image …": a picture made on this phone (stable-diffusion.cpp), never by a web service.
+    const picture = imageRequest(text);
+    if (picture && !sending.current) {
+      sending.current = true;
+      setInput('');
+      setGenerating(true);
+      try { await askImageGen(text, picture); } finally { sending.current = false; setGenerating(false); }
+      return;
+    }
     // 2b. "Play tic tac toe" opens the game right in the chat (the original app's in-chat games); no model needed.
     const game = gameRequest(text);
     if (game) {
@@ -633,6 +645,45 @@ function Chat({ dark }: { dark: boolean }) {
         'by a few minutes); tap it to put the prompt in the chat.';
     } catch (e: any) {
       return String(e?.message ?? e);
+    }
+  }
+
+  /**
+   * Make a picture on the phone. First use asks before downloading the image model (2 GB, license shown); the chat
+   * model is released while drawing and loaded again afterwards (both don't fit in memory together).
+   */
+  async function askImageGen(text: string, prompt: string) {
+    const lang = detect(text, previousLanguage(msgs)).code;
+    const userId = add({ role: 'user', text, lang });
+    await save('user', text, lang, userId);
+    const answerId = add({ role: 'assistant', text: '🎨 Getting ready…', lang });
+    if (!(await local.imageGenAvailable())) {
+      patch(answerId, 'Image generation is not included in this build of the app.');
+      return;
+    }
+    if (!(await local.isImageGenInstalled())) {
+      const gb = (local.IMAGE_GEN_BYTES / 1e9).toFixed(1);
+      const ok = await new Promise<boolean>(res => Alert.alert('Download the image model?',
+        `${gb} GB, once (Wi-Fi recommended). Pictures are then made on this phone; your words are never sent anywhere.
+
+${local.IMAGE_GEN_LICENSE}`,
+        [{ text: 'Not now', style: 'cancel', onPress: () => res(false) }, { text: 'Download', onPress: () => res(true) }]));
+      if (!ok) { patch(answerId, 'No picture made: the image model was not downloaded. Ask again any time.'); return; }
+      try {
+        await local.downloadImageGen(f => patch(answerId, `⬇️ Downloading the image model… ${Math.floor(f * 100)}%`), (await connectivity()) !== 'offline');
+      } catch (e: any) { patch(answerId, `The image model could not be downloaded: ${e?.message ?? e}`); return; }
+    }
+    patch(answerId, '🎨 Drawing on this phone… (this can take a minute)');
+    try {
+      const r = await local.generateImage(prompt);
+      const reply = `Here's "${prompt}", made on this phone in ${Math.round(r.ms / 1000)} s.`;
+      setMsgs(prev => prev.map(m => (m.id === answerId ? { ...m, text: reply, picture: r.path } : m)));
+      metric('image_generated', { ms: Math.round(r.ms) });
+      await save('assistant', reply, lang, answerId, { picture: r.path });
+    } catch (e: any) {
+      patch(answerId, `The picture could not be made: ${e?.message ?? e}`);
+    } finally {
+      loadAndTest().catch(() => undefined); // bring the chat model back
     }
   }
 
@@ -984,6 +1035,9 @@ ${caution}` : r.text || '(no answer)');
                   <Text style={[styles.note, { color: c.accent }]}>Not what you asked? Ask the model instead</Text>
                 </Pressable>
               )}
+              {item.picture && (
+                <Image source={{ uri: `file://${item.picture}` }} style={styles.picture} accessibilityLabel={item.text} resizeMode="cover" />
+              )}
               {item.game && <Interactive spec={item.game} color={{ text: c.text, muted: c.muted, accent: c.accent, card: c.bg }} />}
               {item.note ? <Text style={[styles.note, { color: c.muted }]}>{item.note}</Text> : null}
               {item.prompt && (
@@ -1202,6 +1256,7 @@ const styles = StyleSheet.create({
   link: { fontWeight: '600' },
   promptBox: { minHeight: 140, maxHeight: 320, borderRadius: 8, textAlignVertical: 'top' },
   thumb: { width: 40, height: 40, borderRadius: 6 },
+  picture: { width: 280, height: 280, borderRadius: 12, marginTop: 8 },
   mic: { alignItems: 'center', justifyContent: 'center', minHeight: 44, paddingHorizontal: 4 },
   micIcon: { fontSize: 20 },
   micLang: { fontSize: 10 },

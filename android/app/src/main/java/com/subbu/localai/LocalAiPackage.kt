@@ -11,6 +11,6 @@ import com.facebook.react.uimanager.ViewManager
  *  AiCryptoModule (encrypted backups, M8), AiLocationModule (approximate location for weather) and VoiceModule
  *  (speech in and out with Android's own engines), both from the original app. */
 class LocalAiPackage : ReactPackage {
-  override fun createNativeModules(ctx: ReactApplicationContext): List<NativeModule> = listOf(AiStoreModule(ctx), AiDeviceModule(ctx), AiDocsModule(ctx), AiWorkspaceModule(ctx), AiCryptoModule(ctx), AiLocationModule(ctx), VoiceModule(ctx), AiOcrModule(ctx), AiScheduleModule(ctx))
+  override fun createNativeModules(ctx: ReactApplicationContext): List<NativeModule> = listOf(AiStoreModule(ctx), AiDeviceModule(ctx), AiDocsModule(ctx), AiWorkspaceModule(ctx), AiCryptoModule(ctx), AiLocationModule(ctx), VoiceModule(ctx), AiOcrModule(ctx), AiScheduleModule(ctx), AiImageModule(ctx))
   override fun createViewManagers(ctx: ReactApplicationContext): List<ViewManager<*, *>> = emptyList()
 }

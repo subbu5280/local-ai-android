@@ -53,8 +53,10 @@ export const TABLES: Record<string, TableSpec> = {
   code_proposal_files: { key: ['proposal_id', 'idx'], cols: { proposal_id: ID, idx: I, op: T(10, { enum: ['modify', 'create'] }), path: T(300),
     purpose: T(400), original_sha: TN(64), original_text: { type: 'text', max: 400_000, null: true }, proposed_text: T(400_000), status: T(20),
     result_sha: TN(64), error: TN(4000) } },
-  meta: { key: ['key'], where: "key IN ('semantic_enabled', 'proposal_retention_days')",
-    cols: { key: T(40, { enum: ['semantic_enabled', 'proposal_retention_days'] }), value: T(20) } },
+  // Settings kept in meta. Later additions: standing instructions, scheduled tasks (re-armed at the next app start) and
+  // MCP servers (addresses and tool on/off switches; no credentials exist to back up).
+  meta: { key: ['key'], where: "key IN ('semantic_enabled', 'proposal_retention_days', 'custom_instructions', 'scheduled_tasks', 'mcp_servers')",
+    cols: { key: T(40, { enum: ['semantic_enabled', 'proposal_retention_days', 'custom_instructions', 'scheduled_tasks', 'mcp_servers'] }), value: T(200_000) } },
 };
 
 export type CategoryId = 'settings' | 'chats' | 'memories' | 'documents' | 'documentText' | 'collections' | 'agents' | 'skills' | 'runHistory'
@@ -66,7 +68,7 @@ export type Category = {
 
 /** In backup and restore order (a category's dependencies come first). */
 export const CATEGORIES: Category[] = [
-  { id: 'settings', label: 'Settings', description: 'Meaning-search on/off and the proposal retention setting.', tables: ['meta'], defaultOn: true, replace: true },
+  { id: 'settings', label: 'Settings', description: 'Instructions for the model, scheduled tasks, MCP connections, meaning-search on/off and proposal retention.', tables: ['meta'], defaultOn: true, replace: true },
   { id: 'chats', label: 'Chats', description: 'Conversations and their messages.', tables: ['conversations', 'messages'], defaultOn: true, replace: true },
   { id: 'memories', label: 'Memories', description: 'Facts you asked the app to remember, and what it learned from chats.', tables: ['memories', 'learned'], defaultOn: true, replace: true },
   { id: 'documents', label: 'Document list', description: 'Names, sources and status of imported documents (not their text). Restored entries need their text: restore "Document text" too, or re-import the files.',

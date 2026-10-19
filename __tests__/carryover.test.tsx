@@ -54,3 +54,13 @@ test('time answer comes from the phone clock, with weekday, date and time zone',
   const { deviceAnswer } = require('../src/deviceInfo');
   expect(await deviceAnswer('time', new Date(2026, 9, 19, 22, 5))).toMatch(/^It's Monday, 19 October 2026, 22:05 \(UTC[+-]\d\d:\d\d\), from this phone's clock\.$/);
 });
+
+test('image requests are recognized; drawing questions about charts or how-to are not', () => {
+  const { imageRequest } = require('../src/imageGen');
+  expect(imageRequest('/image a red fox in snow')).toBe('a red fox in snow');
+  expect(imageRequest('Draw a cute cat wearing a helmet.')).toBe('a cute cat wearing a helmet');
+  expect(imageRequest('generate an image of a temple at sunrise')).toBe('a temple at sunrise');
+  expect(imageRequest('Can you create a picture of Hyderabad at night?')).toBe('Hyderabad at night');
+  for (const t of ['How do I draw a graph in Excel?', 'draw a conclusion from this data', 'Draw a UML diagram for my classes',
+    'What is image generation?', 'make a list of fruits']) expect([t, imageRequest(t)]).toEqual([t, null]);
+});

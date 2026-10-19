@@ -21,6 +21,7 @@ export type Conversation = { id: string; title: string; created_at: number; upda
 /** UI details kept with a message so it renders the same after a restart (small JSON; never the image itself). */
 export type MessageMeta = {
   sources?: any[]; links?: any[]; prompt?: string; interactive?: any; artifact?: any; lang?: string; serverId?: string; image?: boolean;
+  picture?: string; // a generated image's file path (app-private files/images)
   replyTo?: { localId?: string; id: string; role: 'user' | 'assistant'; content: string };
   /** M3 Docs mode: the scope a question was asked in (null = all), or how its answer was produced. */
   docs?: { scope?: string[] | null; status?: 'grounded' | 'uncited' | 'none' };

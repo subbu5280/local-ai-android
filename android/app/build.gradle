@@ -147,6 +147,8 @@ dependencies {
     implementation "com.github.adaptech-cz.Tesseract4Android:tesseract4android:4.9.0"
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    // Optional on-device image generation (android/sdjni), present only when its source was fetched.
+    if (findProject(':sdjni')) implementation project(':sdjni')
 
     // M9: tests of the production Kotlin cryptography (BackupCrypto). Test-only: not packaged into the app.
     testImplementation "junit:junit:4.13.2"

@@ -4,6 +4,6 @@ module.exports = {
   // 2-3x longer and hit Jest's 5 s default. A larger budget changes no assertion.
   testTimeout: 30_000,
   // The optional stable-diffusion.cpp source (scripts/fetch-sdcpp.ps1) contains its own JS; it is not app code.
-  modulePathIgnorePatterns: ['<rootDir>/android/app/third_party/'],
-  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/android/app/third_party/'],
+  modulePathIgnorePatterns: ['<rootDir>/android/sdjni/third_party/'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/android/sdjni/third_party/'],
 };
