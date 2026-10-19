@@ -269,3 +269,22 @@ test('after Android closes the app: Docs mode is still on, and an in-chat game i
   expect(a.r.root.findAll(n => n.props.testID === 'ttt-cell-4').length).toBeGreaterThan(0); // the Tic-Tac-Toe board is back
   expect(calls('chat')).toEqual([]); // the game request never reached the model
 });
+
+test('Memory screen: standing instructions reach the model; a secret is refused; a memory can be edited and forgotten', async () => {
+  const a = await mount();
+  expect(await a.say('Remember my name is Ravi.')).toContain('your name is Ravi');
+  await a.tap('Memory');
+  const field = () => a.r.root.findAll(n => n.props.accessibilityLabel === 'Instructions for the model' && n.props.onChangeText)[0];
+  await ReactTestRenderer.act(async () => field().props.onChangeText('My password is hunter22'));
+  await a.tap('Save instructions');
+  expect(Alert.alert).toHaveBeenCalledWith('Not saved', expect.stringMatching(/passwords/));
+  await ReactTestRenderer.act(async () => field().props.onChangeText('Answer in short points. I am learning OAuth authentication.'));
+  await a.tap('Save instructions');
+  await a.tap('Edit name');
+  await ReactTestRenderer.act(async () => a.r.root.findAll(n => n.props.accessibilityLabel === 'Edit name' && n.props.onChangeText)[0].props.onChangeText('Ravi Kumar'));
+  await a.tap('Save name');
+  expect((await chat.listMemories())[0].value).toBe('Ravi Kumar');
+  await a.tap('Back');
+  await a.say('Explain Kafka partitions');
+  expect(calls('chat').at(-1)!.system).toContain("The user's standing instructions: Answer in short points. I am learning OAuth authentication.");
+});

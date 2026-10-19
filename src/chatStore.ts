@@ -332,6 +332,8 @@ const SECRET_KEY = /\bpass(word|wd|code|phrase)s?\b|\bpwd\b|api[\s_-]?keys?|secr
 const SECRET_VALUE = /\b(password|passcode|[mgt]?pin|otp|cvv|api[\s_-]?key|token|secret)\s*(is|=|:)|\bsk-[A-Za-z0-9_-]{16,}|\bgh[pousr]_[A-Za-z0-9]{20,}|\bhf_[A-Za-z0-9]{20,}|\bAKIA[0-9A-Z]{16}\b|\bxox[abprs]-[A-Za-z0-9-]{10,}|\beyJ[\w-]{10,}\.[\w-]{10,}\.|-----BEGIN [A-Z ]*PRIVATE KEY|\b\d{13,19}\b/i;
 /** True when text looks like a credential (used to redact a refused command before it is stored). */
 export const looksLikeCredential = (text: string) => SECRET_KEY.test(text) || SECRET_VALUE.test(text);
+/** True when text contains an actual secret value ("password is …", API keys, card numbers); topic words alone pass. */
+export const containsSecretValue = (text: string) => SECRET_VALUE.test(text);
 
 /** The logical key two writes are compared by: "  Favourite  Editor " -> "favourite editor". */
 export const normalizeMemoryKey = (key: string) => key.replace(/\s+/g, ' ').trim().toLowerCase();

@@ -64,6 +64,7 @@ import * as schedule from './src/schedule';
 import * as learning from './src/learning';
 import { GamesScreen } from './src/GamesScreen';
 import { Markdown } from './src/Markdown';
+import { loadInstructions, MemoryScreen } from './src/MemoryScreen';
 import { answerTableQuestion } from './src/knowledge/tables';
 import { gameRequest, Interactive } from './src/Games';
 import { McpScreen } from './src/McpScreen';
@@ -97,7 +98,7 @@ type Screen = { name: 'history' } | { name: 'knowledge'; select?: boolean } | { 
   | { name: 'defEdit'; kind: DefKind; id: string | null; initial?: string } | { name: 'defRun'; kind: DefKind; id: string; sample?: boolean }
   | { name: 'draft' } | { name: 'code' } | { name: 'workspace'; id: string } | { name: 'codeFile'; workspaceId: string; path: string; line?: number }
   | { name: 'codeTask'; workspaceId: string; taskId: string; start?: { mode: TaskMode; question: string; errorText: string } } | { name: 'proposal'; id: string; workspaceId: string }
-  | { name: 'data' } | { name: 'backup' } | { name: 'games' } | { name: 'model' } | { name: 'mcp' };
+  | { name: 'data' } | { name: 'backup' } | { name: 'games' } | { name: 'model' } | { name: 'mcp' } | { name: 'memory' };
 /** Docs mode: questions are answered from documents; scope null = all documents. */
 type DocsMode = { on: boolean; scope: string[] | null };
 // checking | missing | downloading 42% | verifying | loading | ready | failed
@@ -160,6 +161,7 @@ function Chat({ dark }: { dark: boolean }) {
   useEffect(() => {
     (async () => {
       await chat.open();
+      await loadInstructions();
       const row = (await chat.db().query("SELECT value FROM meta WHERE key = 'docs_mode'"))[0];
       if (row) {
         const saved: DocsMode = JSON.parse(row.value);
@@ -849,6 +851,7 @@ ${caution}` : r.text || '(no answer)');
             )}
             {s.name === 'backup' && <BackupScreen colors={c} onBack={pop} />}
             {s.name === 'games' && <GamesScreen colors={c} onBack={pop} />}
+            {s.name === 'memory' && <MemoryScreen colors={c} onBack={pop} />}
             {s.name === 'mcp' && <McpScreen colors={c} onBack={pop} onUseText={t => { setInput(t); pop(); }} />}
             {s.name === 'model' && <ModelScreen colors={c} focused={i === stack.length - 1} onBack={pop} onSwitched={() => { loadAndTest().catch(() => undefined); }} />}
             {s.name === 'document' && (
@@ -892,7 +895,7 @@ ${caution}` : r.text || '(no answer)');
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featureRow}>
             {([['Documents', '📄', 'Docs', 'knowledge'], ['Agents', '🤖', 'Agents', 'agents'], ['Code', '⌨️', 'Code', 'code'],
-              ['Games', '🎮', 'Games', 'games'], ['Connections', '🔌', 'Connect', 'mcp'], ['Privacy and data', '🛡️', 'Data', 'data']] as const)
+              ['Games', '🎮', 'Games', 'games'], ['Memory', '🧠', 'Memory', 'memory'], ['Connections', '🔌', 'Connect', 'mcp'], ['Privacy and data', '🛡️', 'Data', 'data']] as const)
               .map(([label, icon, text, name]) => (
                 <Pressable key={name} style={[styles.feature, { backgroundColor: c.bubble, borderColor: c.border }]} accessibilityRole="button"
                   accessibilityLabel={label} onPress={() => push({ name } as Screen)} disabled={generating}>

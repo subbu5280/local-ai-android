@@ -344,6 +344,12 @@ export type GenResult = {
   promptMs: number;
 };
 
+/** The user's own standing instructions ("custom instructions"), added to every chat's system message. Kept short
+ *  (MAX_INSTRUCTIONS) so they never crowd out the conversation in the 2,048-token context. */
+export const MAX_INSTRUCTIONS = 600;
+let instructions = '';
+export function setInstructions(text: string) { instructions = text.trim().slice(0, MAX_INSTRUCTIONS); }
+
 /** `history`: earlier turns of this conversation (already bounded by chatStore.recentContext), oldest first.
  *  `knowledge`: relevant facts about the user (learning.relevantKnowledge, bounded), added to the system message. */
 export async function generate(
@@ -363,7 +369,7 @@ export async function generate(
     return ctx.completion(
       {
         messages: [
-          { role: 'system', content: `You are a concise, helpful assistant.${knowledge ? `\n\n${knowledge}` : ''}` },
+          { role: 'system', content: `You are a concise, helpful assistant.${instructions ? `\n\nThe user's standing instructions: ${instructions}` : ''}${knowledge ? `\n\n${knowledge}` : ''}` },
           ...history,
           { role: 'user', content: prompt },
         ],
