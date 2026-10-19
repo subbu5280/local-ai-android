@@ -63,6 +63,57 @@ class AiDeviceModule(private val ctx: ReactApplicationContext) : ReactContextBas
     }
   }
 
+  /**
+   * Model downloads through Android's DownloadManager: it shows a notification with live progress and keeps going
+   * with the screen off, in battery saver, or after the app is closed (seen on the M35: screen-off cut the app's own
+   * download). The file goes to this app's external files folder (no permission needed; private to the app on
+   * Android 11+); the caller checks its SHA-256 and copies it into internal storage. Resolves the download id.
+   */
+  @ReactMethod
+  fun startDownload(url: String, fileName: String, title: String, promise: Promise) {
+    try {
+      if (!url.startsWith("https://") || fileName.contains('/') || fileName.contains("..")) throw IllegalArgumentException("bad download")
+      java.io.File(ctx.getExternalFilesDir("downloads"), fileName).delete() // a stale partial must not be resumed into
+      val req = android.app.DownloadManager.Request(android.net.Uri.parse(url))
+        .setTitle(title)
+        .setDescription("Local AI model download")
+        .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        .setDestinationInExternalFilesDir(ctx, "downloads", fileName)
+      promise.resolve(dm().enqueue(req).toDouble())
+    } catch (e: Throwable) { promise.reject("download_failed", e.message ?: e.javaClass.simpleName) }
+  }
+
+  /** {status: pending|running|paused|done|failed, bytes, total, path, reason} for a download id. */
+  @ReactMethod
+  fun downloadStatus(id: Double, promise: Promise) {
+    val q = android.app.DownloadManager.Query().setFilterById(id.toLong())
+    dm().query(q).use { c ->
+      if (!c.moveToFirst()) { promise.resolve(com.facebook.react.bridge.Arguments.createMap().apply { putString("status", "failed"); putInt("reason", -1) }); return }
+      val s = c.getInt(c.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_STATUS))
+      val status = when (s) {
+        android.app.DownloadManager.STATUS_SUCCESSFUL -> "done"
+        android.app.DownloadManager.STATUS_FAILED -> "failed"
+        android.app.DownloadManager.STATUS_PAUSED -> "paused"
+        android.app.DownloadManager.STATUS_RUNNING -> "running"
+        else -> "pending"
+      }
+      val uri = c.getString(c.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_LOCAL_URI))
+      promise.resolve(com.facebook.react.bridge.Arguments.createMap().apply {
+        putString("status", status)
+        putDouble("bytes", c.getLong(c.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)).toDouble())
+        putDouble("total", c.getLong(c.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_TOTAL_SIZE_BYTES)).toDouble())
+        putString("path", uri?.let { android.net.Uri.parse(it).path })
+        putInt("reason", c.getInt(c.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_REASON)))
+      })
+    }
+  }
+
+  /** Cancel a download and delete its partial file. */
+  @ReactMethod
+  fun cancelDownload(id: Double) { dm().remove(id.toLong()) }
+
+  private fun dm() = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
+
   @ReactMethod
   fun keepScreenOn(on: Boolean) {
     val activity = reactApplicationContext.currentActivity ?: return

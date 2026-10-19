@@ -1,4 +1,5 @@
 import * as RNFS from '@dr.pogodin/react-native-fs';
+import { NativeModules } from 'react-native';
 import { initLlama, releaseAllLlama, type LlamaContext } from 'llama.rn';
 import { BUILTIN_CATALOG, storagePlan, type CatalogModel } from './modelManager';
 
@@ -47,8 +48,9 @@ export const VISION_PROJECTOR: LocalModel = {
 export const VISION_FILES = [VISION_MODEL, VISION_PROJECTOR];
 export const VISION_BYTES = VISION_FILES.reduce((n, f) => n + f.bytes, 0);
 
-/** Free space needed before downloading: the model, +20 % for the .part/move, +200 MB for the OS and app. */
-export const minimumStorage = (m: LocalModel) => Math.ceil(m.bytes * 1.2 + 200e6);
+/** Free space needed before downloading: the model twice (Android's download lands in the app's external folder and is
+ *  copied into private storage, both on the same phone storage), +200 MB for the OS and app. */
+export const minimumStorage = (m: LocalModel) => Math.ceil(m.bytes * 2 + 200e6);
 
 export type InstallState = 'not_installed' | 'downloading' | 'verifying' | 'installed' | 'failed' | 'unsupported';
 let state: InstallState = 'not_installed';
@@ -130,20 +132,10 @@ export async function download(
   };
   if (await RNFS.exists(part)) await RNFS.unlink(part); // stale partial from an interrupted run
   setState('downloading', '0%');
-  let res;
+  const progress = (f: number) => { setState('downloading', `${Math.floor(f * 100)}%`); onProgress(f); };
+  let got: string;
   try {
-    const job = RNFS.downloadFile({
-      fromUrl: m.url,
-      toFile: part,
-      progressInterval: 500,
-      progress: r => {
-        const f = r.bytesWritten / (r.contentLength || m.bytes);
-        setState('downloading', `${Math.floor(f * 100)}%`);
-        onProgress(f);
-      },
-    });
-    activeJob = job.jobId;
-    res = await job.promise;
+    got = NativeModules.AiDevice?.startDownload ? await systemDownload(m, progress) : await rnfsDownload(m, part, progress);
   } catch (e: any) {
     if (state === 'not_installed') {
       // cancelDownload(): remove the partial file and stay not_installed (a cancel is not a failure)
@@ -152,24 +144,59 @@ export async function download(
       setState('not_installed', 'cancelled');
       throw new Error('Download cancelled');
     }
-    throw await fail(`Download interrupted: ${e?.message ?? e}`); // network drop, storage full mid-write...
+    throw await fail(String(e?.message ?? e)); // network drop, HTTP error, storage full mid-write...
   }
   activeJob = null;
-  if (res.statusCode !== 200) throw await fail(`Download failed: HTTP ${res.statusCode}`);
   setState('verifying');
-  const sha = (await RNFS.hash(part, 'sha256')).toLowerCase();
-  if (sha !== m.sha256) throw await fail(`Integrity check failed (sha256 ${sha.slice(0, 12)}…); file deleted`);
+  const sha = (await RNFS.hash(got, 'sha256')).toLowerCase();
+  if (sha !== m.sha256) {
+    await RNFS.unlink(got).catch(() => {});
+    throw await fail(`Integrity check failed (sha256 ${sha.slice(0, 12)}…); file deleted`);
+  }
   if (await RNFS.exists(file(m))) await RNFS.unlink(file(m));
-  await RNFS.moveFile(part, file(m));
+  if (got === part) await RNFS.moveFile(part, file(m));
+  else { await RNFS.copyFile(got, file(m)); await RNFS.unlink(got).catch(() => {}); } // external folder → private storage
   await RNFS.writeFile(marker(m), m.sha256, 'utf8'); // marker last: "installed" only after verification
   setState('installed');
 }
 
+/** In-app download (tests, and builds without AiDevice): stops if the app's connection is cut. Resolves the file path. */
+async function rnfsDownload(m: LocalModel, part: string, progress: (f: number) => void): Promise<string> {
+  const job = RNFS.downloadFile({
+    fromUrl: m.url, toFile: part, progressInterval: 500,
+    progress: r => progress(r.bytesWritten / (r.contentLength || m.bytes)),
+  });
+  activeJob = job.jobId;
+  const res = await job.promise.catch((e: any) => { throw new Error(`Download interrupted: ${e?.message ?? e}`); });
+  if (res.statusCode !== 200) throw new Error(`Download failed: HTTP ${res.statusCode}`);
+  return part;
+}
+
+let systemJob: number | null = null;
+/** Android's DownloadManager: notification with progress; survives screen-off, battery saver and closing the app. */
+async function systemDownload(m: LocalModel, progress: (f: number) => void): Promise<string> {
+  const dev = NativeModules.AiDevice;
+  systemJob = await dev.startDownload(m.url, `${m.id}.gguf`, `${m.name}`);
+  try {
+    for (;;) {
+      await new Promise<void>(r => setTimeout(() => r(), 1000));
+      if (state === 'not_installed') throw new Error('cancelled');
+      const s = await dev.downloadStatus(systemJob);
+      if (s.status === 'done' && s.path) return s.path;
+      if (s.status === 'failed') throw new Error(`Download failed (Android download error ${s.reason})`);
+      if (s.bytes > 0) progress(s.bytes / (s.total > 0 ? s.total : m.bytes));
+    }
+  } finally {
+    systemJob = null;
+  }
+}
+
 /** Cancel an in-flight download; the partial file is removed by download()'s failure path. */
 export function cancelDownload() {
-  if (activeJob !== null) {
+  if (activeJob !== null || systemJob !== null) {
     setState('not_installed', 'cancelled');
-    RNFS.stopDownload(activeJob);
+    if (activeJob !== null) RNFS.stopDownload(activeJob);
+    if (systemJob !== null) NativeModules.AiDevice?.cancelDownload(systemJob);
   }
 }
 

@@ -16,6 +16,7 @@ jest.mock('@dr.pogodin/react-native-fs', () => ({
   mkdir: jest.fn(async () => {}),
   readFile: jest.fn(async (p: string) => mockFiles.get(p) ?? ''),
   writeFile: jest.fn(async (p: string, d: string) => void mockFiles.set(p, d)),
+  copyFile: jest.fn(async (a: string, b: string) => void mockFiles.set(b, mockFiles.get(a) ?? '')),
   moveFile: jest.fn(async (a: string, b: string) => {
     mockFiles.set(b, mockFiles.get(a) ?? '');
     mockFiles.delete(a);
@@ -70,6 +71,33 @@ test('download → verify → installed (marker only after checksum)', async () 
   expect(await m.isInstalled()).toBe(true);
   expect(mockFiles.has(`${GGUF}.part`)).toBe(false); // atomically moved
   expect(states).toEqual(expect.arrayContaining(['downloading', 'verifying', 'installed']));
+});
+
+test("Android's download service: progress from the notification download, verified, copied into private storage", async () => {
+  const m = mm();
+  const EXT = '/storage/emulated/0/Android/data/com.subbu.localai/files/downloads/qwen.gguf';
+  const statuses = [{ status: 'running', bytes: 400, total: 1000 }, { status: 'done', bytes: 1000, total: 1000, path: EXT }];
+  const dev = { startDownload: jest.fn(async () => 42), downloadStatus: jest.fn(async () => statuses.shift()), cancelDownload: jest.fn() };
+  require('react-native').NativeModules.AiDevice = dev;
+  mockFiles.set(EXT, 'bytes');
+  const seen: number[] = [];
+  await m.download(m.MODEL, (f: number) => seen.push(f), true);
+  expect(dev.startDownload).toHaveBeenCalledWith(m.MODEL.url, `${m.MODEL.id}.gguf`, m.MODEL.name);
+  expect(seen).toEqual([0.4]);
+  expect(mockFiles.get(GGUF)).toBe('bytes');
+  expect(mockFiles.has(EXT)).toBe(false); // the external copy is removed after the move into private storage
+  expect(await m.isInstalled()).toBe(true);
+  delete require('react-native').NativeModules.AiDevice;
+}, 15_000);
+
+test("Android's download service: a failed download is reported, nothing is installed", async () => {
+  const m = mm();
+  require('react-native').NativeModules.AiDevice = { startDownload: jest.fn(async () => 1),
+    downloadStatus: jest.fn(async () => ({ status: 'failed', reason: 1006 })), cancelDownload: jest.fn() };
+  await expect(m.download(m.MODEL, () => {}, true)).rejects.toThrow('Android download error 1006');
+  expect(m.getState().state).toBe('failed');
+  expect(await m.isInstalled()).toBe(false);
+  delete require('react-native').NativeModules.AiDevice;
 });
 
 test('checksum mismatch: rejected, file deleted, never marked installed', async () => {
