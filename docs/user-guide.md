@@ -6,9 +6,11 @@ assistant see [coding-assistant.md](coding-assistant.md); for backups see [backu
 
 ## First start
 
-1. Open the app and tap **Get model**. It downloads Qwen2.5-1.5B-Instruct (1.1 GB, Apache-2.0) once, only after you
+1. The first start shows three short welcome pages (privacy, what you can do, the download); **Skip** closes them.
+   Then tap **Get model**. It downloads Qwen2.5-1.5B-Instruct (1.1 GB, Apache-2.0) once, only after you
    confirm, and checks it against its pinned SHA-256 before use. Use Wi-Fi. Offline, the app says so and downloads
-   nothing.
+   nothing. The download runs in Android's own download service: a notification shows progress, and it keeps going
+   with the screen off or the app closed.
 2. When the line under the title shows a green dot and **On-device · offline ready**, type a message and tap **Send**.
 
 Everything below works offline unless it is marked **(online)**.
@@ -24,6 +26,9 @@ Everything below works offline unless it is marked **(online)**.
   **</> Copy code**, which copies only the code blocks.
 - **Reply** shows a "Replying to …" bar above the input (✕ cancels). The quoted message is given to the model with
   your next message, so "make it shorter" knows what "it" is.
+- **Formatted answers:** headings, bold, lists and quotes are shown formatted. Code blocks get colour, a language
+  label and their own **⧉ Copy**; long lines scroll sideways.
+- **Speed:** each answer shows how fast it was written, e.g. `⚡ 7.2 tok/s · 174 tokens`.
 - **Saved chats:** every conversation is saved on the phone. The latest one reopens when the app starts.
 
 ## Languages
@@ -52,6 +57,15 @@ guessing. Follow-ups such as "What about tomorrow?" continue the last live quest
 stored.
 
 ## Memory
+
+**🧠 Memory** in the header shows everything the app tells the model about you:
+
+- **Instructions for the model** (up to 600 characters), added to every chat, e.g. "Answer in short points. I'm a Java
+  developer learning Kafka." Text that contains a real password, key or card number is refused.
+- **What you asked me to remember**, each with **Edit** and **Forget**.
+- **Picked up from your chats**, each with **Forget**.
+
+In chat:
 
 - "Remember my name is Ravi", "What is my name?", "Forget my name" are answered by the phone itself, without the
   model, in any mode.
@@ -89,6 +103,8 @@ came due while the phone was off notifies right after it starts.
 
 **Connect** lets you add a remote [MCP](https://modelcontextprotocol.io) server you trust by its `https://` address.
 
+- **Suggested** servers (public, no sign-in) can be added with one tap: DeepWiki, Context7, Hugging Face, Cloudflare
+  docs and GitMCP.
 - Its tools are listed **switched off**; switch on only the ones you want.
 - Before every call the app shows the server, the tool and the exact arguments, and sends nothing until you tap Send.
 - **Use in chat** puts a result in the message box.

@@ -30,4 +30,6 @@ test('code colouring never changes the code text', () => {
   expect(t.find(x => x.text === 'def')?.kind).toBe('keyword');
   expect(t.find(x => x.text === '# add one')?.kind).toBe('comment');
   expect(t.find(x => x.text === '1')?.kind).toBe('number');
+  // a Python docstring is one string: words inside it are not coloured as keywords
+  expect(tokenize('"""This function adds"""')).toEqual([{ text: '"""This function adds"""', kind: 'string' }]);
 });

@@ -4,7 +4,7 @@
  * with light syntax colouring and their own Copy button. Anything else is shown as plain text, never dropped.
  * ponytail: no tables, links or nested lists; add when answers need them.
  */
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Colors } from './theme';
 
 export type Block =
@@ -70,7 +70,7 @@ export type Token = { text: string; kind: 'keyword' | 'string' | 'comment' | 'nu
 
 /** Light, language-agnostic colouring: comments, strings, numbers and common keywords. Never changes the text. */
 export function tokenize(code: string): Token[] {
-  const re = /(\/\/[^\n]*|#[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b)/g;
+  const re = /("""[\s\S]*?"""|'''[\s\S]*?'''|\/\/[^\n]*|#[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b)/g;
   const out: Token[] = [];
   let at = 0;
   for (let m; (m = re.exec(code)); ) {
@@ -112,9 +112,12 @@ export function Markdown({ text, colors: c, onCopy }: { text: string; colors: Co
                   <Text style={styles.codeCopy}>⧉ Copy</Text>
                 </Pressable>
               </View>
-              <Text selectable style={styles.codeText}>
-                {tokenize(b.text).map((t, j) => <Text key={j} style={{ color: CODE_COLORS[t.kind] }}>{t.text}</Text>)}
-              </Text>
+              {/* Code keeps its line breaks: long lines scroll sideways instead of wrapping. */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text selectable style={styles.codeText}>
+                  {tokenize(b.text).map((t, j) => <Text key={j} style={{ color: CODE_COLORS[t.kind] }}>{t.text}</Text>)}
+                </Text>
+              </ScrollView>
             </View>
           );
         }
