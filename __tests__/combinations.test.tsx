@@ -402,3 +402,17 @@ test('"/image …" makes a picture on the phone: shown in chat and kept in histo
   expect((await chat.recentMessages(c.id, 1))[0].meta.picture).toBe('/data/files/images/img-1.png');
   delete NativeModules.AiImage;
 });
+
+test('a picture with no chat model downloaded: no "model failed" error afterwards, Get model is still offered', async () => {
+  mockEnv.modelInstalled = false;
+  NativeModules.AiImage = { available: jest.fn(async () => true), generate: jest.fn(async () => ({ path: '/x/img.png', ms: 45000 })), cancel: jest.fn() };
+  jest.spyOn(local, 'isImageGenInstalled').mockResolvedValue(true);
+  const a = await mount();
+  await a.type('/image a fox');
+  await a.tap('Send');
+  await settle(400);
+  const texts = a.r.root.findAll((n: any) => typeof n.props.children === 'string').map((n: any) => n.props.children).join('\n');
+  expect(texts).not.toMatch(/could not start|failed to start/);
+  expect(a.by('Get model')).toBeTruthy();
+  delete NativeModules.AiImage;
+});

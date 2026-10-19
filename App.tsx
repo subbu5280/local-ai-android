@@ -385,7 +385,7 @@ function Chat({ dark }: { dark: boolean }) {
     } catch (e: any) {
       setMsgs(prev => prev.map(m => (m.id === answerId ? { ...m, role: 'error', text: `The image model couldn't look at this photo (${e?.message ?? e}).` } : m)));
     } finally {
-      loadAndTest().catch(() => undefined); // only one large model fits in RAM: bring the text model back
+      restoreChatModel(); // only one large model fits in RAM: bring the text model back
     }
   }
 
@@ -400,6 +400,12 @@ function Chat({ dark }: { dark: boolean }) {
   }
 
   /** Load the model and run one tiny answer; the model counts as ready only if both work. */
+  /** After the photo or picture model used the memory: reload the chat model, but only if it is downloaded (a phone
+   *  that only has the image model showed "Model failed to start" after every picture). */
+  function restoreChatModel() {
+    local.isInstalled().then(ok => (ok ? loadAndTest() : setStatus('missing'))).catch(() => undefined);
+  }
+
   async function loadAndTest() {
     setStatus('loading');
     try {
@@ -683,7 +689,7 @@ ${local.IMAGE_GEN_LICENSE}`,
     } catch (e: any) {
       patch(answerId, `The picture could not be made: ${e?.message ?? e}`);
     } finally {
-      loadAndTest().catch(() => undefined); // bring the chat model back
+      restoreChatModel(); // bring the chat model back
     }
   }
 

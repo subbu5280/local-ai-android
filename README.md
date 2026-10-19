@@ -20,6 +20,7 @@ carries over without needing its laptop backend.
 | ⌨️ **Code** | Ask about, debug and review a project folder; approve proposed changes file by file | [Coding assistant](docs/coding-assistant.md) |
 | 🌦 **Live info** | Weather, time, prices and news from free services, with sources | [User guide](docs/user-guide.md#live-information-online) |
 | 🎙 **Voice and photos** | Speak in six languages; ask about a photo with an on-device image model | [User guide](docs/user-guide.md#voice) |
+| 🎨 **Pictures** | `/image a temple at sunrise`: images made on the phone (SD-Turbo, opt-in 2 GB download) | [User guide](docs/user-guide.md#pictures-image-generation) |
 | 🎮 **Games** | Tic-Tac-Toe, Rock Paper Scissors, Number Guessing, Memory Match, full screen or in chat | [User guide](docs/user-guide.md#games) |
 | ⏰ **Scheduled tasks** | "Schedule daily 08:00 …" reminds you with a notification | [User guide](docs/user-guide.md#scheduled-tasks) |
 | 🔌 **Connections** | Opt-in remote MCP servers; every tool off by default, every call confirmed | [User guide](docs/user-guide.md#connections-mcp-online) |
@@ -41,6 +42,10 @@ npm install
 
 On Windows, run `npm install` from PowerShell or cmd, not Git Bash: llama.rn's install script calls `tar`, and Git
 Bash's GNU tar misreads `C:\...` paths.
+
+Optional, for on-device image generation: `powershell -ExecutionPolicy Bypass -File scriptsetch-sdcpp.ps1` fetches
+stable-diffusion.cpp (pinned commit, about 300 MB of source, git-ignored). The `android/sdjni` module is built only
+when it is present; without it the app builds as before and says image generation isn't in this build.
 
 ## Run
 

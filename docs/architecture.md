@@ -6,7 +6,9 @@
   Code, Games, Connect, Data, History, Model).
 - **Chat routing.** A message is handled by the first route that applies, in this order (checked in
   `__tests__/combinations.test.tsx`):
-  attached photo → schedule command → in-chat game → memory command → Docs mode → live lookup → the model.
+  attached photo → schedule command → picture request → in-chat game → memory command → phone question (time, date,
+  where am I) → live lookup → model-labelled short question (needClassifier) → Docs mode or the model.
+  Phone questions, live lookups and the classifier are skipped in Docs mode.
 - **Model.** On-device inference with llama.rn (Qwen2.5-1.5B-Instruct Q4_K_M), one operation at a time. Every model
   file is verified by SHA-256 before use.
 - **Storage.** Everything is in the app's private SQLite database through `AiStoreModule.kt`, with versioned,
@@ -28,6 +30,7 @@
 | `AiLocation` | Approximate location for "weather here" |
 | `AiVoice` | Speech recognition and text-to-speech; memory info |
 | `AiSchedule` | Scheduled-task alarms and notifications; re-armed after a restart |
+| `AiImage` (+ `android/sdjni`) | Image generation with stable-diffusion.cpp, a separate library module with hidden symbols so its ggml can't clash with llama.rn's |
 
 ## Database schema history
 

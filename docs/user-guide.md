@@ -96,6 +96,17 @@ In chat:
 **📷** takes a photo or picks one from the gallery; then ask about it ("What is this?"). The first time, the app
 offers to download the phone's image model (1.7 GB, verified). The photo is not stored.
 
+## Pictures (image generation)
+
+Type `/image a temple at sunrise`, `draw a cute cat wearing a helmet` or `generate an image of Hyderabad at night`.
+The picture is made **on the phone** by SD-Turbo with stable-diffusion.cpp, and appears in the chat. Questions such as
+"how do I draw a graph in Excel?" are not treated as picture requests.
+
+- The first picture asks before downloading the image model: 2.0 GB, once, with its license (SD-Turbo is for
+  non-commercial, personal use). Your words are never sent anywhere.
+- One 512 x 512 picture takes a few seconds on a laptop; on a phone expect up to about a minute. The chat model is put
+  aside while drawing and comes back afterwards.
+
 ## Games
 
 **Games** in the header opens Tic-Tac-Toe, Rock Paper Scissors, Number Guessing and Memory Match in full screen: the
