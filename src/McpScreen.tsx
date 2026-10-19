@@ -19,9 +19,9 @@ export function McpScreen({ colors: c, onBack, onUseText }: Props) {
   const refresh = useCallback(() => { mcp.listServers().then(setServers).catch(() => undefined); }, []);
   useEffect(refresh, [refresh]);
 
-  async function add() {
+  async function add(target = url) {
     setBusy(true);
-    try { await mcp.addServer(url); setUrl(''); } catch (e: any) { Alert.alert('Not added', String(e?.message ?? e)); }
+    try { await mcp.addServer(target); setUrl(''); } catch (e: any) { Alert.alert('Not added', String(e?.message ?? e)); }
     setBusy(false);
     refresh();
   }
@@ -58,10 +58,25 @@ export function McpScreen({ colors: c, onBack, onUseText }: Props) {
             placeholder="https://example.com/mcp" placeholderTextColor={c.muted} autoCapitalize="none" autoCorrect={false}
             accessibilityLabel="MCP server address" />
           <Pressable style={[styles.chip, { borderColor: c.accent }]} accessibilityRole="button" accessibilityLabel="Add server"
-            disabled={busy || !url.trim()} onPress={add}>
+            disabled={busy || !url.trim()} onPress={() => add()}>
             <Text style={{ color: c.accent }}>{busy ? '…' : 'Add'}</Text>
           </Pressable>
         </View>
+        {mcp.PRESETS.some(p => !servers.some(s => s.url === p.url)) && (
+          <View style={{ gap: 6 }}>
+            <Text style={[styles.bold, { color: c.text }]}>Suggested (public, no sign-in)</Text>
+            {mcp.PRESETS.filter(p => !servers.some(s => s.url === p.url)).map(p => (
+              <Pressable key={p.url} style={[styles.card, styles.row, { backgroundColor: c.bubble }]} accessibilityRole="button"
+                accessibilityLabel={`Add ${p.name}`} disabled={busy} onPress={() => add(p.url)}>
+                <View style={styles.flex}>
+                  <Text style={[styles.bold, { color: c.text }]}>{p.name}</Text>
+                  <Text style={[styles.small, { color: c.muted }]}>{p.about}</Text>
+                </View>
+                <Text style={{ color: c.accent }}>＋ Add</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
         {result && (
           <View style={[styles.card, { backgroundColor: c.bubble }]}>
             <Text style={[styles.bold, { color: c.text }]}>{result.title}</Text>

@@ -50,3 +50,8 @@ test.each([false, true])('a new server\'s tools start off; a call needs the tool
   await mcp.removeServer(s.url);
   expect(await mcp.listServers()).toEqual([]);
 });
+
+test('presets are https and pass the same address check as typed servers', () => {
+  expect(mcp.PRESETS.length).toBeGreaterThan(0);
+  for (const p of mcp.PRESETS) expect(mcp.checkUrl(p.url)).toBe(p.url);
+});

@@ -13,6 +13,18 @@ export type McpTool = { name: string; description: string; inputSchema: unknown;
 export type McpServer = { url: string; name: string; tools: McpTool[] };
 
 const KEY = 'mcp_servers';
+
+/**
+ * Suggested public servers: remote, no sign-in, and each checked to answer the MCP handshake (2026-10-19). Adding one
+ * still lists its tools switched off. ponytail: a fixed list; a server that goes away just fails to add with a message.
+ */
+export const PRESETS: { name: string; url: string; about: string }[] = [
+  { name: 'DeepWiki', url: 'https://mcp.deepwiki.com/mcp', about: 'Ask about any public GitHub repository' },
+  { name: 'Context7', url: 'https://mcp.context7.com/mcp', about: 'Current docs and code examples for libraries' },
+  { name: 'Hugging Face', url: 'https://huggingface.co/mcp', about: 'Search models, datasets and papers' },
+  { name: 'Cloudflare docs', url: 'https://docs.mcp.cloudflare.com/mcp', about: 'Search Cloudflare documentation' },
+  { name: 'GitMCP docs', url: 'https://gitmcp.io/docs', about: 'Documentation of any GitHub project' },
+];
 const TIMEOUT_MS = 20_000;
 const MAX_RESULT_CHARS = 8000;
 
