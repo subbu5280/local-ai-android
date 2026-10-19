@@ -32,7 +32,7 @@ export async function ensureMicPermission(): Promise<MicPermission> {
   if (await PermissionsAndroid.check(p)) return 'granted';
   const r = await PermissionsAndroid.request(p, {
     title: 'Microphone',
-    message: 'AI ChatBot uses the microphone only after you tap 🎙, for that one question. Audio is not saved.',
+    message: 'Local AI uses the microphone only after you tap 🎙, for that one question. Audio is not saved.',
     buttonPositive: 'Allow',
     buttonNegative: 'Not now',
   });
@@ -131,7 +131,7 @@ export function speechText(text: string): string {
 export function voiceError(code: string | undefined, lang: Lang): string {
   switch (code) {
     case 'permission':
-      return 'Microphone permission is off. Allow it in Settings → Apps → AI ChatBot → Permissions.';
+      return 'Microphone permission is off. Allow it in Settings → Apps → Local AI → Permissions.';
     case 'no_speech':
     case 'no_match':
       return "I didn't catch any speech. Tap 🎙 and try again.";

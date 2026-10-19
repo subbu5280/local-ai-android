@@ -64,6 +64,8 @@ import * as schedule from './src/schedule';
 import * as learning from './src/learning';
 import { GamesScreen } from './src/GamesScreen';
 import { Markdown } from './src/Markdown';
+import { deviceAnswer, deviceAsk, type DeviceAsk } from './src/deviceInfo';
+import { classifyNeed, worthClassifying, type Need } from './src/needClassifier';
 import { loadInstructions, MemoryScreen } from './src/MemoryScreen';
 import { welcomeSeen, WelcomeScreen } from './src/WelcomeScreen';
 import { answerTableQuestion } from './src/knowledge/tables';
@@ -91,6 +93,7 @@ type Msg = {
   links?: live.LiveSource[]; // a live answer (weather, news, prices): the web pages it came from
   game?: any; // an allow-listed game spec shown inside the chat (Games.tsx), like the original app
   speed?: string; // "⚡ 10.6 tok/s" under a model answer (shown, not stored)
+  guessed?: string; // routed by the model's guess (needClassifier): the question, for "Ask the model instead"
 };
 /** Screens opened over the chat; the chat is underneath (an empty stack). */
 type Screen = { name: 'history' } | { name: 'knowledge'; select?: boolean } | { name: 'document'; id: string; ordinal?: number }
@@ -556,16 +559,44 @@ function Chat({ dark }: { dark: boolean }) {
       setInput('');
       try { if (await askMemory(text)) return; } finally { sending.current = false; }
     }
+    // 2c. Questions about the phone itself (the time, the date, "where am I") are answered from the phone, never by the
+    // model, which can't know them. Not in Docs mode, where questions are about your documents.
+    const dev = docs.on ? null : deviceAsk(text);
+    if (dev) { await askDevice(text, dev); return; }
     // 3./4. Live questions (weather, news, prices, time) come from live services, not the model (a 1.5B model can't
     // know today's weather). In Docs mode the question is about your documents, so live lookups are off there.
     const lookup = docs.on ? null : liveLookup(text);
-    if (lookup) {
+    // A rule match that only guesses "news" is the weakest kind ("which area am I currently in" has "currently"): when
+    // the model is ready it decides instead (step 5). Weather, prices and world time go straight to their service.
+    const weakGuess = !!lookup && status === 'ready' && live.plan(lookup).tool === 'news'
+      && !/\b(news|headlines?|breaking|latest|updates?|score|scores|results?|election)\b/i.test(lookup);
+    if (lookup && !weakGuess) {
       sending.current = true;
       viewToken.current++;
       setInput('');
       setGenerating(true);
       try { await askLive(text, lookup); } finally { sending.current = false; setGenerating(false); }
       return;
+    }
+    // 5. No word rule matched: a short question is classified by the model, which picks a label only (time, date,
+    // location, weather, news, price, none). The answer then comes from the phone or a live service, not the model,
+    // so "Where am I right now?" or "Is it raining outside?" work however they're worded.
+    if (!docs.on && status === 'ready' && (weakGuess || worthClassifying(text))) {
+      sending.current = true;
+      setInput('');
+      setGenerating(true);
+      let need: Need = 'none';
+      try { need = await classifyNeed(text); } finally { sending.current = false; setGenerating(false); }
+      metric('need_classified', { need });
+      if (need === 'time' || need === 'date' || need === 'location') { await askDevice(text, need, true); return; }
+      if (need === 'weather' || need === 'news' || need === 'price') {
+        sending.current = true;
+        setGenerating(true);
+        // Steer the live planner to the chosen service: "weather …" picks the weather tool; others search the news.
+        try { await askLive(text, need === 'weather' && live.plan(text).tool !== 'weather' ? `weather ${text}` : text, true); }
+        finally { sending.current = false; setGenerating(false); }
+        return;
+      }
     }
     if (status !== 'ready') {
       add({ role: 'error', text: 'The on-device model is not ready yet. Tap "Get model" to download it once.' });
@@ -603,6 +634,32 @@ function Chat({ dark }: { dark: boolean }) {
     } catch (e: any) {
       return String(e?.message ?? e);
     }
+  }
+
+  /** The model's guess sent a question to the clock, location or a live service, but the user meant a general question. */
+  async function askModelInstead(text: string) {
+    if (sending.current || status !== 'ready') return;
+    sending.current = true;
+    viewToken.current++;
+    setGenerating(true);
+    stopRequested.current = false;
+    try { await askModel(text); } finally { sending.current = false; setGenerating(false); }
+  }
+
+  /** A question about the phone itself (time, date, where am I), answered from the clock or location, never the model. */
+  async function askDevice(text: string, dev: DeviceAsk, guessed = false) {
+    sending.current = true;
+    setInput('');
+    try {
+      const lang = detect(text, previousLanguage(msgs)).code;
+      const userId = add({ role: 'user', text, lang });
+      await save('user', text, lang, userId);
+      const answerId = add({ role: 'assistant', text: dev === 'location' ? '📍 Finding where you are…' : '…', lang, guessed: guessed ? text : undefined });
+      const reply = await deviceAnswer(dev);
+      patch(answerId, reply);
+      metric('device_answer', { ask: dev });
+      await save('assistant', reply, lang, answerId);
+    } finally { sending.current = false; }
   }
 
   /** Answer a memory command; false when the text wasn't one after all (then it goes on as a normal message). */
@@ -652,11 +709,11 @@ function Chat({ dark }: { dark: boolean }) {
    * (no model writes it) with its source links. Offline or failed lookups say so and never guess. The phone's
    * approximate location is used only for "weather here", after asking permission once (src/location.ts).
    */
-  async function askLive(text: string, lookup: string) {
+  async function askLive(text: string, lookup: string, guessed = false) {
     const lang = detect(text, previousLanguage(msgs)).code;
     const userId = add({ role: 'user', text, lang });
     await save('user', text, lang, userId);
-    const answerId = add({ role: 'assistant', text: '🔎 Looking it up…', lang });
+    const answerId = add({ role: 'assistant', text: '🔎 Looking it up…', lang, guessed: guessed ? text : undefined });
     const contextCity = earlierAsks().reverse().map(q => live.plan(q)).find(p => p.tool === 'weather' && p.city);
     const a = await live.answer(lookup, (await connectivity()) !== 'offline', fetch, {
       contextCity: contextCity && 'city' in contextCity ? contextCity.city : null,
@@ -921,6 +978,12 @@ ${caution}` : r.text || '(no answer)');
                 ? <Markdown text={item.text} colors={c} onCopy={code => copyText(code, 'Code copied')} />
                 : <Text selectable style={{ color: item.role === 'user' ? '#fff' : c.text }}>{item.text}</Text>}
               {item.speed ? <Text style={[styles.speed, { color: c.muted }]}>{item.speed}</Text> : null}
+              {item.guessed && (
+                <Pressable accessibilityRole="button" accessibilityLabel="Ask the model instead" hitSlop={8} disabled={generating}
+                  onPress={() => { askModelInstead(item.guessed!).catch(() => undefined); }}>
+                  <Text style={[styles.note, { color: c.accent }]}>Not what you asked? Ask the model instead</Text>
+                </Pressable>
+              )}
               {item.game && <Interactive spec={item.game} color={{ text: c.text, muted: c.muted, accent: c.accent, card: c.bg }} />}
               {item.note ? <Text style={[styles.note, { color: c.muted }]}>{item.note}</Text> : null}
               {item.prompt && (

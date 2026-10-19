@@ -46,6 +46,20 @@ These are word-list and script rules, not language understanding. The app's own 
 of 100; see [the evaluation](../eval/results/translation-m13.md)). The app adds a caution under every translation
 into an Indian language. Hindi to English works well (chrF 67).
 
+## Your phone: time, date and where you are
+
+Ask "What time is it?", "What's the date?" or "Where am I?" in any wording ("how late is it right now?", "which area
+am I in?", "నేను ఎక్కడ ఉన్నాను?"). The answer comes from the phone, never from the model:
+
+- **Time and date** come from the phone's clock, with the time zone. Works offline.
+- **Where you are** uses approximate location (about 1 km) and the place name. Android asks for permission the first
+  time; if you refuse, the app says how to allow it later. It is never stored.
+
+Clear questions are recognized by word rules. Other wordings are labelled by the on-device model (time, date,
+location, weather, news, price or general), and the app then gets the real answer. The model only picks the label;
+it never writes the time or the place. It sometimes mislabels a general question ("capital of France" as location;
+measured in `eval/results/needs-v1.md`), so these answers show **"Not what you asked? Ask the model instead"**.
+
 ## Live information (online)
 
 Ask for weather ("Weather in Chennai tomorrow", "weather here"), local time, crypto prices ("Bitcoin price") or news

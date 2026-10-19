@@ -38,3 +38,19 @@ test('table questions in Docs mode are calculated exactly (the M35 sheet where t
   expect(tableQuestion('Which region sells more?', t)).toBeNull(); // no operation word: the model answers
   expect(tableQuestion('total of Region', t)).toBeNull(); // not a numeric column
 });
+
+test('questions about the phone (time, date, where am I) are recognized; world-clock and weather questions are not', () => {
+  const { deviceAsk } = require('../src/deviceInfo');
+  for (const t of ['What is the time now?', 'what time is it', 'Time now?', "What's the date today?", 'What day is it?', 'Where am I?',
+    'what is my location', 'Which city am I in?', 'ఇప్పుడు సమయం ఎంత?', 'मैं कहाँ हूँ?']) expect([t, deviceAsk(t)]).not.toEqual([t, null]);
+  expect(deviceAsk('Where am I?')).toBe('location');
+  expect(deviceAsk('What is the time now?')).toBe('time');
+  for (const t of ['What is the time in Tokyo?', 'Weather here today', 'Explain time complexity of quicksort', 'What is time?']) {
+    expect([t, deviceAsk(t)]).toEqual([t, null]);
+  }
+});
+
+test('time answer comes from the phone clock, with weekday, date and time zone', async () => {
+  const { deviceAnswer } = require('../src/deviceInfo');
+  expect(await deviceAnswer('time', new Date(2026, 9, 19, 22, 5))).toMatch(/^It's Monday, 19 October 2026, 22:05 \(UTC[+-]\d\d:\d\d\), from this phone's clock\.$/);
+});

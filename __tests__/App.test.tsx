@@ -369,7 +369,7 @@ test('metrics: load, answer and Stop are logged with numbers only, never the mes
     await settle();
     const all = metrics();
     expect(all.find(e => e.event === 'docs_ready')).toMatchObject({ engine: 'fts5' }); // M3: search engine at launch
-    const m = all.filter(e => e.event !== 'docs_ready');
+    const m = all.filter(e => e.event !== 'docs_ready' && e.event !== 'need_classified'); // the classifier's label is checked in combinations
     expect(m.map(e => e.event)).toEqual(['model_state', 'model_loaded', 'answer', 'answer']);
     expect(m[0]).toMatchObject({ state: 'installed' });
     expect(m[1]).toMatchObject({ model: 'qwen2.5-1.5b-instruct-q4_k_m', gpu: false, testTokPerSec: 5 });

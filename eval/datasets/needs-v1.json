@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "note": "Questions the word rules do not catch, with the information each needs. Used by eval/needs.eval.ts to measure the on-device classifier (src/needClassifier.ts).",
+  "cases": [
+    { "q": "Which area am I currently standing in?", "need": "location" },
+    { "q": "Can you figure out what city this is?", "need": "location" },
+    { "q": "What neighbourhood is this?", "need": "location" },
+    { "q": "Tell me my present location please", "need": "location" },
+    { "q": "how late is it right now?", "need": "time" },
+    { "q": "Do you know the hour?", "need": "time" },
+    { "q": "Is it morning or evening now?", "need": "time" },
+    { "q": "What's today?", "need": "date" },
+    { "q": "Which month are we in?", "need": "date" },
+    { "q": "Do I need a jacket outside?", "need": "weather" },
+    { "q": "Is it sunny in Pune right now?", "need": "weather" },
+    { "q": "Any big events happening in India today?", "need": "news" },
+    { "q": "Who won yesterday's cricket match?", "need": "news" },
+    { "q": "How much is gold selling for today?", "need": "price" },
+    { "q": "What does one dollar cost in rupees now?", "need": "price" },
+    { "q": "What is Kafka used for?", "need": "none" },
+    { "q": "How do I reverse a list in Python?", "need": "none" },
+    { "q": "Who wrote the Ramayana?", "need": "none" },
+    { "q": "What is the capital of France?", "need": "none" },
+    { "q": "Why is the sky blue?", "need": "none" },
+    { "q": "How many minutes are in a day?", "need": "none" },
+    { "q": "What time zone is India in?", "need": "none" },
+    { "q": "Can you suggest a name for my dog?", "need": "none" },
+    { "q": "What happened in 1947 in India?", "need": "none" }
+  ]
+}

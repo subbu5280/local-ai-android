@@ -434,6 +434,10 @@ export async function completeJson(system: string, user: string, schema: object,
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
       n_predict: nPredict,
       temperature: 0,
+      // jinja off: llama.rn then turns the schema into a strict grammar. With its template engine on (the default),
+      // the grammar came from the chat template and stayed lazy on the M35: the model wrote
+      // '<|im_start|>assistant ```json …' and every JSON answer (agent plans, the need classifier) failed to parse.
+      jinja: false,
       response_format: { type: 'json_schema', json_schema: { strict: true, schema } },
     });
   });

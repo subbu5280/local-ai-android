@@ -65,7 +65,7 @@ export async function ensurePermission(ask = true): Promise<PermissionState> {
   if (state !== 'not_requested' || !ask) return state;
   const r = await PermissionsAndroid.request(P, {
     title: 'Location',
-    message: 'Allow approximate location so I can give the weather for where you are. It is used only when you ask, and never stored.',
+    message: 'Allow approximate location (about 1 km) so I can answer "where am I" and give the weather where you are. It is used only when you ask, and never stored.',
     buttonPositive: 'Allow',
     buttonNegative: 'Not now',
   });
@@ -105,10 +105,11 @@ export function clearCache() {
   cache = null;
 }
 
-/** What to tell the user when local weather can't use the device location (they can always name a city). */
-export function problemText(p: Problem): string {
-  if (p === 'location_off') return "Your phone's Location setting is off, so I can't tell where you are. Turn it on, or tell me a city.";
-  if (p === 'unavailable') return "I couldn't get your location right now. Try again in a moment, or tell me a city.";
-  if (p === 'unsupported') return 'Location is not available on this device. Tell me a city and I can give its weather.';
-  return 'I need your location to give you local weather. You can allow location for AI ChatBot in Android Settings → Apps → AI ChatBot → Permissions, or tell me a city.';
+/** What to tell the user when the device location can't be used (they can always name a city). */
+export function problemText(p: Problem, purpose: 'weather' | 'location' = 'weather'): string {
+  const fallback = purpose === 'weather' ? 'or tell me a city.' : 'or tell me where you are.';
+  if (p === 'location_off') return `Your phone's Location setting is off, so I can't tell where you are. Turn it on, ${fallback}`;
+  if (p === 'unavailable') return `I couldn't get your location right now. Try again in a moment, ${fallback}`;
+  if (p === 'unsupported') return `Location is not available on this device. ${purpose === 'weather' ? 'Tell me a city and I can give its weather.' : ''}`.trim();
+  return `I need your location ${purpose === 'weather' ? 'to give you local weather' : 'to tell you where you are'}. You can allow location for Local AI in Android Settings → Apps → Local AI → Permissions, ${fallback}`;
 }

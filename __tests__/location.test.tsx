@@ -106,7 +106,7 @@ test('permission denied / blocked: an honest answer and no repeated dialogs', as
   expect(await location.permissionState()).toBe('denied');
   expect(await location.currentPlace()).toEqual({ problem: 'denied' });
   expect(request).toHaveBeenCalledTimes(1); // not asked again on the next weather question
-  expect(location.problemText('denied')).toContain('allow location for AI ChatBot in Android Settings');
+  expect(location.problemText('denied')).toContain('allow location for Local AI in Android Settings');
   expect(location.problemText('denied')).toContain('or tell me a city');
   for (const k of Object.keys(mockFiles)) delete mockFiles[k];
   request.mockResolvedValueOnce(PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN as any);

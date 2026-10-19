@@ -36,3 +36,6 @@ eval/.cache/
 *.laibackup
 *.jks
 keystore.properties
+
+# Optional image generation: stable-diffusion.cpp source fetched by scripts/fetch-sdcpp.ps1 (~300 MB upstream)
+android/app/third_party/

@@ -10,7 +10,7 @@ import ReactTestRenderer from 'react-test-renderer';
 import { Alert, NativeModules, PermissionsAndroid, Platform } from 'react-native';
 import { sqliteDb } from '../testUtils/sqliteDb';
 
-const mockEnv = { modelInstalled: true, calls: [] as { kind: string; text: string; system: string }[], hang: null as null | Promise<void> };
+const mockEnv = { modelInstalled: true, calls: [] as { kind: string; text: string; system: string }[], hang: null as null | Promise<void>, need: null as null | string };
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 jest.mock('@dr.pogodin/react-native-fs', () => ({
   DocumentDirectoryPath: '/docs', CachesDirectoryPath: '/cache',
@@ -28,6 +28,8 @@ jest.mock('llama.rn', () => ({
       const timings = { predicted_n: 3, predicted_per_second: 5, prompt_ms: 1 };
       if (Array.isArray(last)) { mockEnv.calls.push({ kind: 'image', text: last.find((x: any) => x.type === 'text').text, system: '' }); return { text: 'A red apple on a table.', timings }; }
       if (/three words/.test(last)) return { text: 'Hi there friend', timings };
+      // the need classifier (JSON schema): label only, recorded separately from chat answers
+      if (req.response_format) { mockEnv.calls.push({ kind: 'classify', text: last, system: '' }); return { text: JSON.stringify({ need: mockEnv.need ?? 'none' }), timings }; }
       if (mockEnv.hang) await mockEnv.hang;
       mockEnv.calls.push({ kind: /<<<SOURCES/.test(last) ? 'docs' : 'chat', text: last, system: req.messages[0].content });
       return { text: /<<<SOURCES/.test(last) ? 'Refunds are possible within 30 days [1].' : 'model answer', timings };
@@ -58,7 +60,7 @@ const node = (name: string) => (globalThis as any).process.getBuiltinModule(name
 beforeEach(async () => {
   const fs = node('fs'), os = node('os'), path = node('path');
   chat.setDb(sqliteDb(path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'combo-')), 'chat.db')));
-  Object.assign(mockEnv, { modelInstalled: true, calls: [], hang: null });
+  Object.assign(mockEnv, { modelInstalled: true, calls: [], hang: null, need: null });
   net.state = 'online';
   fetched.length = 0;
   (Platform as any).OS = 'android';
@@ -299,4 +301,83 @@ test('welcome: shown on the first start only; "Get the model" opens the normal d
   await ReactTestRenderer.act(async () => { mounted.splice(0).forEach(r => r.unmount()); });
   a = await mount();
   expect(a.r.root.findAll(n => n.props.accessibilityLabel === 'Skip welcome').length).toBe(0); // seen once, not again
+});
+
+describe('live and phone questions: word rules, the model classifier, and location permission in every state', () => {
+  const lastReply = async () => { const [c] = await chat.listConversations(1); return (await chat.recentMessages(c.id, 1))[0].content; };
+
+  test('a word-rule question ("Where am I?") uses the location directly: no classifier, no model answer', async () => {
+    const a = await mount();
+    expect(await a.say('Where am I?')).toMatch(/^You're near Hyderabad, Telangana, India \(approximate, about 1 km; 17\.38, 78\.48\)/);
+    expect(calls('classify')).toEqual([]);
+    expect(calls('chat')).toEqual([]);
+  });
+
+  test('unusual wording reaches the phone through the classifier: location, time, weather; ordinary questions stay with the model', async () => {
+    const a = await mount();
+    mockEnv.need = 'location';
+    expect(await a.say("Can you tell me which area I'm currently standing in?")).toMatch(/^You're near Hyderabad/);
+    mockEnv.need = 'time';
+    expect(await a.say('how late is it right now?')).toMatch(/^It's \w+day, \d+ \w+ \d{4}, \d\d:\d\d \(UTC[+-]\d\d:\d\d\), from this phone's clock\.$/);
+    mockEnv.need = 'weather';
+    expect(await a.say('Do I need an umbrella today?')).toMatch(/Hyderabad/);
+    expect(fetched.some(u => u.includes('api.open-meteo.com'))).toBe(true);
+    mockEnv.need = 'none';
+    expect(await a.say('Explain how Kafka works?')).toBe('model answer');
+    expect(calls('classify').length).toBe(3); // the umbrella question matched the weather rule; no facts came from the model
+    expect(calls('chat').length).toBe(1);
+  });
+
+  test('location permission: asked when needed; refused, blocked or Location off give honest messages, never a made-up place', async () => {
+    const perm = jest.spyOn(PermissionsAndroid, 'check').mockResolvedValue(false);
+    const req = jest.spyOn(PermissionsAndroid, 'request').mockResolvedValue(PermissionsAndroid.RESULTS.DENIED);
+    let a = await mount();
+    expect(await a.say('Where am I?')).toMatch(/I need your location to tell you where you are\. You can allow location for Local AI/);
+    expect(req).toHaveBeenCalledTimes(1); // Android's dialog was shown
+    expect(NativeModules.AiLocation.currentLocation).not.toHaveBeenCalled();
+    await ReactTestRenderer.act(async () => { mounted.splice(0).forEach(r => r.unmount()); });
+    location.clearCache();
+    req.mockResolvedValue(PermissionsAndroid.RESULTS.GRANTED);
+    const fsExists = require('@dr.pogodin/react-native-fs').exists;
+    const original = fsExists.getMockImplementation();
+    const never = { mockRestore: () => fsExists.mockImplementation(original) }; // put the harness fake back afterwards
+    fsExists.mockImplementation(async (p: any) => !String(p).includes('location_permission') && mockEnv.modelInstalled); // never asked before
+    a = await mount();
+    expect(await a.say('Where am I?')).toMatch(/^You're near Hyderabad/);
+    location.clearCache();
+    perm.mockResolvedValue(true);
+    NativeModules.AiLocation.currentLocation.mockRejectedValueOnce(Object.assign(new Error('off'), { code: 'location_off' }));
+    expect(await a.say('Where am I?')).toBe("Your phone's Location setting is off, so I can't tell where you are. Turn it on, or tell me where you are.");
+    expect(calls('chat')).toEqual([]);
+    never.mockRestore();
+  });
+
+  test('Docs mode: never classified; offline: no live lookup is invented', async () => {
+    const a = await mount();
+    const ready = () => a.r.root.findAll((n: any) => [].concat(n.props.children ?? []).flat().some((x: any) => typeof x === 'string' && x.includes('offline ready'))).length > 0;
+    for (let i = 0; i < 60 && !ready(); i++) await settle(50); // wait for the model, as a user would
+    await a.tap('Ask documents');
+    mockEnv.need = 'location';
+    await a.type('What is the refund period?');
+    await a.tap('Send');
+    await settle(400); // a Docs answer (retrieval + model) can take longer than say()'s short wait under a full run
+    expect(calls('classify')).toEqual([]);
+    await a.tap('Ask documents');
+    net.state = 'offline';
+    mockEnv.need = 'news';
+    expect(await a.say('Anything big happening in Chennai?')).toMatch(/offline/i);
+    expect(fetched.filter(u => u.includes('news.google'))).toEqual([]);
+    void lastReply;
+  });
+});
+
+test('a wrong guess is easy to undo: "Ask the model instead" sends the same question to the model', async () => {
+  const a = await mount();
+  mockEnv.need = 'location'; // the classifier's measured false alarm: "capital of France" -> location
+  expect(await a.say('What is the capital of France?')).toMatch(/^You're near Hyderabad/);
+  await a.tap('Ask the model instead');
+  await settle(60);
+  expect(calls('chat').at(-1)!.text).toContain('What is the capital of France?');
+  const [c] = await chat.listConversations(1);
+  expect((await chat.recentMessages(c.id, 1))[0].content).toBe('model answer');
 });
