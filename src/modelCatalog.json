@@ -150,5 +150,33 @@
     "qualityScore": null,
     "qualitySource": "different benchmark suite (not comparable)",
     "notes": "Not yet validated with llama.rn on this app build."
+  },
+  {
+    "id": "llama-3.2-3b-instruct-q4_k_m",
+    "name": "Llama 3.2 3B Instruct (Q4_K_M)",
+    "paramsB": 3.21,
+    "url": "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+    "sha256": "6c1a2b41161032677be168d354123594c0e6e67d2b9227c84f296ad037c728ff",
+    "bytes": 2019377696,
+    "chatCapable": true,
+    "supported": true,
+    "provider": "llama.rn",
+    "capability": "text",
+    "family": "llama3.2",
+    "architecture": "llama",
+    "version": "3.2",
+    "quantization": "Q4_K_M",
+    "contextLength": 131072,
+    "platforms": [
+      "android-arm64"
+    ],
+    "license": "Llama 3.2 Community License",
+    "languages": {
+      "en": "good",
+      "hi": "fair",
+      "te": "fair"
+    },
+    "qualityScore": null,
+    "qualitySource": "Checked 2026-10-19 on llama.cpp b10256 (the build in llama.rn): loads, 2+2 correct, answered a Telugu question in correct Telugu. Llama 3.2 1B (English answers with invented facts) and DeepSeek-R1-Distill 1.5B (no answer, Chinese replies) failed the same check and are not listed."
   }
 ]
