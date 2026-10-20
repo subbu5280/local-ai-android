@@ -41,3 +41,7 @@ keystore.properties
 android/sdjni/third_party/
 android/sdjni/build/
 android/sdjni/.cxx/
+
+# JVM crash dumps (Gradle/Java language server)
+hs_err_pid*.log
+replay_pid*.log
