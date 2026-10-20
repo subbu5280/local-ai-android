@@ -1,14 +1,20 @@
 /**
- * Shared game feel, with React Native's own Animated and Vibration (no extra library): short haptics, a pop-in for
+ * Shared game feel, with React Native's own Animated and Vibration and Android's ToneGenerator (no extra library):
+ * vibration and sound, a pop-in for
  * marks and cards, a win celebration, and best scores kept on the phone (meta table, key "game_best").
  */
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, Vibration, View } from 'react-native';
+import { Animated, Easing, NativeModules, StyleSheet, Text, Vibration, View } from 'react-native';
 import * as chat from './chatStore';
 
-/** tap: a light tick on a move; win: a short double buzz; lose: one longer buzz. Ignored where unsupported. */
+/**
+ * Feedback for a game event: a vibration plus a matching system tone (android AiDeviceModule.playTone, which follows
+ * the phone's silent mode). tap: a light tick; win: a short double buzz and a bright tone; lose: one longer buzz and a
+ * low tone. Ignored where unsupported.
+ */
 export function haptic(kind: 'tap' | 'win' | 'lose') {
   try { Vibration.vibrate(kind === 'tap' ? 12 : kind === 'win' ? [0, 40, 60, 80] : 120); } catch {}
+  try { NativeModules.AiDevice?.playTone?.(kind); } catch {}
 }
 
 /** Its children scale in with a little overshoot when they first appear (a mark placed, a card turned). */

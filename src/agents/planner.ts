@@ -13,7 +13,7 @@
 import { analyze } from '../core/intent';
 import { completeJson } from '../localModel';
 import { quoteSafe } from '../knowledge/knowledgePrompt';
-import { extractExpression } from './calculator';
+import { calculate, extractExpression } from './calculator';
 import { clampLimits, validatePlan, type PolicyContext } from './policy';
 import { getTool } from './tools';
 import type { AgentConfig, Plan, StepRecord, StepSpec } from './types';
@@ -108,6 +108,32 @@ export async function modelPlan(task: string, agent: AgentConfig, docs: DocRef[]
 }
 
 /**
+ * A number from the task's arithmetic that the model's calculator steps don't use, or null. A valid-looking plan can
+ * still be incomplete: on the emulator the model turned "15% of 240 plus 7" into just "15% of 240".
+ */
+export function droppedNumbers(task: string, steps: StepSpec[]): string | null {
+  const calc = steps.filter(s => s.tool === 'calculator').map(s => String(s.input?.expression ?? '')).join(' ');
+  const wanted = extractExpression(task);
+  if (!calc || !wanted) return null;
+  const used = new Set(calc.match(/\d+(?:\.\d+)?/g) ?? []);
+  return (wanted.match(/\d+(?:\.\d+)?/g) ?? []).find(n => !used.has(n)) ?? null;
+}
+
+/**
+ * The first calculator expression in the plan that the calculator can't evaluate, or null. On the M35 the model wrote
+ * "7 + result from step 1", which passed the schema but failed when run; checking first lets the app use its own
+ * plan instead of showing a failed run.
+ */
+export function uncalculable(steps: StepSpec[]): string | null {
+  for (const s of steps) {
+    if (s.tool !== 'calculator') continue;
+    const expr = String(s.input?.expression ?? '');
+    try { calculate(expr); } catch { return expr.slice(0, 60); }
+  }
+  return null;
+}
+
+/**
  * The plan for a task: the model's if it is valid, else the default plan (with the reason recorded).
  * @param ctx agent, document scope and whether the model is loaded
  * @param docs ready documents in scope (names shown to the planner; ids validated by the policy)
@@ -119,6 +145,10 @@ export async function makePlan(task: string, ctx: PolicyContext, docs: DocRef[])
       const steps = await modelPlan(task, ctx.agent, docs);
       const plan: Plan = { steps, source: 'model' };
       const checked = validatePlan(plan, ctx);
+      const dropped = droppedNumbers(task, steps);
+      if (!checked.errors.length && dropped) checked.errors.push(`it left ${dropped} out of the calculation`);
+      const bad = uncalculable(steps);
+      if (!checked.errors.length && bad) checked.errors.push(`"${bad}" can't be calculated`);
       if (!checked.errors.length) return { plan, ...checked };
       note = `The model's plan was rejected (${checked.errors[0]}), so the default plan for this kind of task is used.`;
     } catch (e: any) {

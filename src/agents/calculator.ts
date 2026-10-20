@@ -134,7 +134,14 @@ export function calculate(expression: string): number {
 export const formatNumber = (n: number) => String(Number(n.toPrecision(10)));
 
 /** The arithmetic part of a sentence ("What is 12.5% of 80?" -> "12.5% of 80"), or null if there is none. */
-export function extractExpression(text: string): string | null {
+/** Spoken arithmetic as symbols, so "15% of 240 plus 7" is one expression (not "15% of 240" with "plus 7" lost). */
+export function wordsToSymbols(text: string): string {
+  return text.replace(/\bmultiplied by\b|\btimes\b/gi, '*').replace(/\bdivided by\b|\bover\b/gi, '/')
+    .replace(/\bplus\b|\badded to\b/gi, '+').replace(/\bminus\b|\bless\b/gi, '-');
+}
+
+export function extractExpression(raw: string): string | null {
+  const text = wordsToSymbols(raw);
   const candidates = text.match(/[-+(]?\s*[\d.(][\d\s.+\-*/^%()×÷x]*(?:\s*(?:of|mod)\s*[\d.(][\d\s.+\-*/^%()×÷x]*)*/gi) ?? [];
   const best = candidates.map(c => c.trim().replace(/[?.!\s]+$/, '')).filter(c => /\d/.test(c) && /[-+*/^%×÷x]|\bof\b|\bmod\b/i.test(c))
     .sort((a, b) => b.length - a.length)[0];

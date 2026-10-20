@@ -114,6 +114,24 @@ class AiDeviceModule(private val ctx: ReactApplicationContext) : ReactContextBas
 
   private fun dm() = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
 
+  /**
+   * Game sounds with Android's built-in ToneGenerator (no audio files, no library). The system stream follows the
+   * phone's silent/vibrate mode and system volume, so games are quiet whenever the phone is.
+   */
+  @ReactMethod
+  fun playTone(kind: String) {
+    val (tone, ms) = when (kind) {
+      "win" -> android.media.ToneGenerator.TONE_PROP_ACK to 300
+      "lose" -> android.media.ToneGenerator.TONE_PROP_NACK to 300
+      else -> android.media.ToneGenerator.TONE_PROP_BEEP to 40
+    }
+    try {
+      val g = android.media.ToneGenerator(android.media.AudioManager.STREAM_SYSTEM, 70)
+      g.startTone(tone, ms)
+      android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ g.release() }, ms + 100L)
+    } catch (_: RuntimeException) {} // no audio device free: a game never fails over a sound
+  }
+
   @ReactMethod
   fun keepScreenOn(on: Boolean) {
     val activity = reactApplicationContext.currentActivity ?: return

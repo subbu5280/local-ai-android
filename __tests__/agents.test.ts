@@ -354,3 +354,22 @@ test('every registered tool declares id, version, schema, permission, risk and a
   }
   expect(TOOLS.filter(t => t.risk === 'write').map(t => t.id)).toEqual(['file.export']);
 });
+
+test('arithmetic in words is kept whole, and a model plan that drops a number is replaced by the complete one', () => {
+  const { extractExpression, calculate } = require('../src/agents/calculator');
+  const { droppedNumbers } = require('../src/agents/planner');
+  const e = extractExpression('What is 15% of 240 plus 7?');
+  expect(e).toBe('15% of 240 + 7');
+  expect(calculate(e)).toBe(43);
+  expect(extractExpression('12 times 3 minus 4')).toBe('12 * 3 - 4');
+  const modelSteps = [{ tool: 'calculator', input: { expression: '15% of 240' } }];
+  expect(droppedNumbers('What is 15% of 240 plus 7?', modelSteps as any)).toBe('7');
+  expect(droppedNumbers('What is 15% of 240 plus 7?', [{ tool: 'calculator', input: { expression: '0.15*240+7' } }] as any)).toBe('15'); // 15 written as 0.15
+  expect(droppedNumbers('What is 18% of 250?', [{ tool: 'calculator', input: { expression: '18% of 250' } }] as any)).toBeNull();
+});
+
+test('a calculator step that refers to an earlier result in words is caught before running', () => {
+  const { uncalculable } = require('../src/agents/planner');
+  expect(uncalculable([{ tool: 'calculator', input: { expression: '7 + result from step 1' } }])).toBe('7 + result from step 1');
+  expect(uncalculable([{ tool: 'calculator', input: { expression: '15% of 240 + 7' } }])).toBeNull();
+});
