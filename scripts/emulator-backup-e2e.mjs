@@ -65,7 +65,17 @@ function type(desc, text) {
 }
 function launch() {
   adb('shell', 'am', 'start', '-W', '-n', `${PKG}/.MainActivity`);
-  step('app starts', !!waitFor(byDesc('Privacy and data'), 30000));
+  // A fresh app opens on the first-run welcome pages (since the UI update); New chat is always on the chat header.
+  const skip = waitFor(byDesc('Skip welcome'), 6000);
+  if (skip) adb('shell', 'input', 'tap', String(Math.round(skip.x)), String(Math.round(skip.y)));
+  step('app starts', !!waitFor(byDesc('New chat'), 30000));
+}
+/** Data is the last chip of the header's sideways-scrolling feature row: scroll the row first. */
+function openData() {
+  const row = waitFor(byDesc('Documents'), 10000);
+  if (row) adb('shell', 'input', 'swipe', '900', String(Math.round(row.y)), '100', String(Math.round(row.y)), '300');
+  sleep(500);
+  tap(byDesc('Privacy and data'), 'Privacy and data', 10000, false);
 }
 function finish(code) {
   const dir = 'verification/runs';
@@ -87,7 +97,7 @@ launch();
 tap(byDesc('Agents'), 'Agents');
 step('default agents created', !!waitFor(byText(/Document assistant/)));
 adb('shell', 'input', 'keyevent', '4');
-tap(byDesc('Privacy and data'), 'Privacy and data');
+openData();
 tap(byDesc('Backup and restore'), 'Backup and restore');
 type('Backup password', PASSWORD);
 type('Repeat backup password', PASSWORD);
@@ -113,7 +123,7 @@ step('saved file starts with the format magic', head.startsWith('LOCALAI-BACKUP/
 // 4. A "new phone": clear the app, restore with a wrong and then the right password.
 adb('shell', 'pm', 'clear', PKG);
 launch();
-tap(byDesc('Privacy and data'), 'Privacy and data');
+openData();
 tap(byDesc('Backup and restore'), 'Backup and restore');
 tap(byDesc('Restore tab'), 'Restore tab');
 tap(byDesc('Choose backup file'), 'Choose backup file');

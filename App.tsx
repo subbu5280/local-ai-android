@@ -471,7 +471,7 @@ function Chat({ dark }: { dark: boolean }) {
     Alert.alert(
       'Download the on-device model?',
       `${target.name}\n${target.paramsB}B parameters · ${gb} GB download · license ${target.license}.\n` +
-        `Use Wi-Fi: this uses ${gb} GB of data. Keep this app open until it finishes (the screen stays on). ` +
+        `Use Wi-Fi: this uses ${gb} GB of data. It continues in the background with a progress notification. ` +
         'After this, chat works offline.',
       [
         { text: 'Cancel', style: 'cancel' },

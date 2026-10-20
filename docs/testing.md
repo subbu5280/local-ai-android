@@ -58,6 +58,11 @@ uninstalls, clears data or downloads the model.
 | In-chat games, Copy, Reply | ✓ | | ✓ |
 | Docs mode kept after the app is closed | ✓ | | ✓ |
 | Full-screen games, new theme | | | ✓ screenshots |
-| Backup cryptography and restore flow | ✓ | ✓ | not yet |
-| MCP | ✓ fake server | | not yet |
-| Live data, voice, photos (image model) | ✓ | | not yet |
+| Backup cryptography and restore flow | ✓ | ✓ 11/11 (2026-10-20 build) | not yet |
+| MCP | ✓ fake server, live DeepWiki | ✓ add suggested server, tools off, confirm, real call | not yet |
+| Image generation (SD-Turbo + TAESD) | ✓ 7.5 s per image | ✓ 45 s per image, download confirm, 2 GB verified | not yet |
+| Location permission prompt, "where am I", time | ✓ | ✓ Android prompt, then answer | ✓ |
+| Agents: model-made plans (after the JSON fix) | ✓ | ✓ "plan proposed by the on-device model" | not yet |
+| Chat model download via Android's download service | ✓ | ✓ notification, 130 s, verified | not yet |
+| Live weather, memory, in-chat game, translation caution | ✓ | ✓ | ✓ (weather, game, caution) |
+| Voice | ✓ | | not yet |
