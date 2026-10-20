@@ -81,6 +81,7 @@ test('mic: transcription lands in the message box, editable, and is NOT sent unt
   await ReactTestRenderer.act(async () => ui.input().props.onChangeText('నాకు Kafka గురించి సింపుల్‌గా చెప్పండి'));
   await ui.send();
   expect(mockPrompts[0]).toContain('నాకు Kafka గురించి సింపుల్‌గా చెప్పండి');
+  expect(ui.texts()).not.toContain('✓ Transcription ready: edit it if needed, then tap Send'); // cleared by Send
 });
 
 test('mic: permission denied / blocked / retry; no crash; nothing recorded', async () => {

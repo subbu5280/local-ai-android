@@ -66,6 +66,6 @@ uninstalls, clears data or downloads the model.
 | Chat model download via Android's download service | ✓ | ✓ notification, 130 s, verified | not yet |
 | Live weather, memory, in-chat game, translation caution | ✓ | ✓ | ✓ (weather, game, caution) |
 | Voice: Speak (text-to-speech) | ✓ | | ✓ reads aloud (Google TTS; Samsung's engine is private to Samsung apps) |
-| Voice: microphone | ✓ | | not yet (needs a person speaking) |
+| Voice: microphone | ✓ | | ✓ Telugu "హలో" transcribed, edited, sent (the 1.5B model's Telugu reply was poor; use Llama 3.2 3B) |
 | Game celebration and win line | ✓ | | ✓ screenshot |
 | Agents: arithmetic in words ("15% of 240 plus 7" = 43) | ✓ | ✓ | ✓ |

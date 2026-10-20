@@ -529,6 +529,8 @@ function Chat({ dark }: { dark: boolean }) {
   async function send(editedPrompt?: string) {
     const text = input.trim();
     if ((!text && !attachment) || sending.current) return;
+    // The "transcription ready" hint is about the text just sent; on the M35 it stayed up after Send.
+    setVoiceState(v => (v.state === 'ready' ? { state: 'idle' } : v));
     // Routing order (M12, checked in __tests__/combinations.test.tsx): an attached photo → a memory command (any mode)
     // → Docs mode → a live question → the model. Each branch below says why it comes where it does.
     // 1. A photo is the question's subject, whatever the text says.
