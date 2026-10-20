@@ -416,3 +416,15 @@ test('a picture with no chat model downloaded: no "model failed" error afterward
   expect(a.by('Get model')).toBeTruthy();
   delete NativeModules.AiImage;
 });
+
+test('a failed picture is still answered in the saved conversation (no question left without a reply after a restart)', async () => {
+  NativeModules.AiImage = { available: jest.fn(async () => true), generate: jest.fn(async () => { throw new Error('out of memory'); }), cancel: jest.fn() };
+  jest.spyOn(local, 'isImageGenInstalled').mockResolvedValue(true);
+  const a = await mount();
+  await a.type('/image a fox');
+  await a.tap('Send');
+  await settle(400);
+  const [c] = await chat.listConversations(1);
+  expect((await chat.recentMessages(c.id, 1))[0]).toMatchObject({ role: 'assistant', content: 'The picture could not be made: out of memory' });
+  delete NativeModules.AiImage;
+});

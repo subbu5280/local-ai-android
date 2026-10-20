@@ -383,7 +383,10 @@ function Chat({ dark }: { dark: boolean }) {
       showSpeed(answerId, r);
       if (r.text) await save('assistant', r.text, lang, answerId);
     } catch (e: any) {
-      setMsgs(prev => prev.map(m => (m.id === answerId ? { ...m, role: 'error', text: `The image model couldn't look at this photo (${e?.message ?? e}).` } : m)));
+      const why = `The image model couldn't look at this photo (${e?.message ?? e}).`;
+      setMsgs(prev => prev.map(m => (m.id === answerId ? { ...m, role: 'error', text: why } : m)));
+      // Saved too: otherwise, after a restart, the question showed with no answer at all (seen on the M35).
+      await save('assistant', why, lang, answerId).catch(() => undefined);
     } finally {
       restoreChatModel(); // only one large model fits in RAM: bring the text model back
     }
@@ -663,8 +666,10 @@ function Chat({ dark }: { dark: boolean }) {
     const userId = add({ role: 'user', text, lang });
     await save('user', text, lang, userId);
     const answerId = add({ role: 'assistant', text: '🎨 Getting ready…', lang });
+    // Every outcome is saved, so a restart never shows the request without an answer.
+    const finish = (reply: string) => { patch(answerId, reply); return save('assistant', reply, lang, answerId).catch(() => undefined); };
     if (!(await local.imageGenAvailable())) {
-      patch(answerId, 'Image generation is not included in this build of the app.');
+      await finish('Image generation is not included in this build of the app.');
       return;
     }
     if (!(await local.isImageGenInstalled())) {
@@ -674,10 +679,10 @@ function Chat({ dark }: { dark: boolean }) {
 
 ${local.IMAGE_GEN_LICENSE}`,
         [{ text: 'Not now', style: 'cancel', onPress: () => res(false) }, { text: 'Download', onPress: () => res(true) }]));
-      if (!ok) { patch(answerId, 'No picture made: the image model was not downloaded. Ask again any time.'); return; }
+      if (!ok) { await finish('No picture made: the image model was not downloaded. Ask again any time.'); return; }
       try {
         await local.downloadImageGen(f => patch(answerId, `⬇️ Downloading the image model… ${Math.floor(f * 100)}%`), (await connectivity()) !== 'offline');
-      } catch (e: any) { patch(answerId, `The image model could not be downloaded: ${e?.message ?? e}`); return; }
+      } catch (e: any) { await finish(`The image model could not be downloaded: ${e?.message ?? e}`); return; }
     }
     patch(answerId, '🎨 Drawing on this phone… (this can take a minute)');
     try {
@@ -687,7 +692,7 @@ ${local.IMAGE_GEN_LICENSE}`,
       metric('image_generated', { ms: Math.round(r.ms) });
       await save('assistant', reply, lang, answerId, { picture: r.path });
     } catch (e: any) {
-      patch(answerId, `The picture could not be made: ${e?.message ?? e}`);
+      await finish(`The picture could not be made: ${e?.message ?? e}`);
     } finally {
       restoreChatModel(); // bring the chat model back
     }
