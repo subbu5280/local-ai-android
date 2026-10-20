@@ -65,4 +65,7 @@ uninstalls, clears data or downloads the model.
 | Agents: model-made plans (after the JSON fix) | ✓ | ✓ "plan proposed by the on-device model" | ✓ 18% of 250 = 45 |
 | Chat model download via Android's download service | ✓ | ✓ notification, 130 s, verified | not yet |
 | Live weather, memory, in-chat game, translation caution | ✓ | ✓ | ✓ (weather, game, caution) |
-| Voice | ✓ | | not yet |
+| Voice: Speak (text-to-speech) | ✓ | | ✓ reads aloud (Google TTS; Samsung's engine is private to Samsung apps) |
+| Voice: microphone | ✓ | | not yet (needs a person speaking) |
+| Game celebration and win line | ✓ | | ✓ screenshot |
+| Agents: arithmetic in words ("15% of 240 plus 7" = 43) | ✓ | ✓ | ✓ |

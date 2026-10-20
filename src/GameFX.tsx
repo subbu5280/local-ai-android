@@ -85,5 +85,7 @@ export function useBest(game: string): [number | null, (score: number) => boolea
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
   burst: { position: 'absolute', fontSize: 34 },
-  banner: { fontSize: 30, fontWeight: '900', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
+  // A dark rounded backing keeps the banner readable over the board's marks (on the M35 the O's showed through it).
+  banner: { fontSize: 28, fontWeight: '900', textAlign: 'center', backgroundColor: 'rgba(18,20,42,0.88)',
+    paddingHorizontal: 20, paddingVertical: 10, borderRadius: 18, overflow: 'hidden' },
 });
