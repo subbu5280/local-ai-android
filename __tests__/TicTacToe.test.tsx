@@ -4,7 +4,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import { Text } from 'react-native';
-import { newGame, play, statusText, winnerOf, TicTacToe } from '../src/TicTacToe';
+import { newGame, phoneMove, play, statusText, winnerOf, TicTacToe, type Cell, type Game } from '../src/TicTacToe';
 
 const moves = (cells: number[]) => cells.reduce(play, newGame());
 
@@ -42,7 +42,7 @@ test('component: tap cells, win, then Play Again resets', async () => {
   const color = { text: '#111', muted: '#888', accent: '#4f46e5', card: '#eee' };
   let r!: ReactTestRenderer.ReactTestRenderer;
   await ReactTestRenderer.act(() => {
-    r = ReactTestRenderer.create(<TicTacToe spec={{ title: 'Tic-Tac-Toe' }} color={color} />);
+    r = ReactTestRenderer.create(<TicTacToe spec={{ title: 'Tic-Tac-Toe', opponent: 'friend' }} color={color} />);
   });
   const texts = () => r.root.findAllByType(Text).map(t => [].concat(t.props.children).join(''));
   const byId = (id: string) => r.root.findAll(n => n.props.testID === id && typeof n.props.onPress === 'function')[0];
@@ -57,4 +57,38 @@ test('component: tap cells, win, then Play Again resets', async () => {
   await ReactTestRenderer.act(() => again.props.onPress());
   expect(texts()).toContain("Player X's turn");
   expect(cells().every(c => !c.props.disabled)).toBe(true);
+});
+
+test('Hard never loses: every possible sequence of your moves ends in a phone win or a draw', () => {
+  let games = 0;
+  const explore = (g: Game) => {
+    if (g.winner || g.draw) { games++; expect(g.winner).not.toBe('X'); return; }
+    if (g.turn === 'O') { explore(play(g, phoneMove(g.board, 'O', 'hard'))); return; }
+    g.board.forEach((c, i) => { if (!c) explore(play(g, i)); });
+  };
+  explore(newGame('X'));
+  expect(games).toBeGreaterThan(50); // all of your choices were tried
+});
+
+test('Easy takes a winning move, blocks yours, and otherwise picks a free cell', () => {
+  const b = (s: string): Cell[] => s.split('').map(ch => (ch === '.' ? null : (ch as Cell)));
+  expect(phoneMove(b('OO.XX....'), 'O', 'easy')).toBe(2); // win
+  expect(phoneMove(b('XX.O.....'), 'O', 'easy')).toBe(2); // block
+  expect(phoneMove(b('XOXOXOOX.'), 'O', 'easy', () => 0)).toBe(8);
+  expect(phoneMove(b('XOXOXOOXO'), 'O', 'easy')).toBe(-1);
+});
+
+test('against the phone: it answers your move after a short pause', async () => {
+  jest.useFakeTimers();
+  const color = { text: '#111', muted: '#888', accent: '#4f46e5', card: '#eee' };
+  let r!: ReactTestRenderer.ReactTestRenderer;
+  await ReactTestRenderer.act(() => { r = ReactTestRenderer.create(<TicTacToe spec={{}} color={color} />); });
+  const cell = (i: number) => r.root.findAll(n => n.props.testID === `ttt-cell-${i}` && typeof n.props.onPress === 'function')[0];
+  await ReactTestRenderer.act(() => cell(4).props.onPress());
+  expect(cell(0).props.disabled).toBe(true); // the phone's turn: your taps wait
+  await ReactTestRenderer.act(() => { jest.advanceTimersByTime(500); });
+  const marks = r.root.findAll(n => n.props.testID?.startsWith?.('ttt-cell-') && typeof n.props.onPress === 'function')
+    .filter(n => /column \d+, O$/.test(n.props.accessibilityLabel));
+  expect(marks.length).toBe(1);
+  jest.useRealTimers();
 });

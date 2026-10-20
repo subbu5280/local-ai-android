@@ -6,6 +6,7 @@
  */
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Celebration, haptic, Pop, useBest } from './GameFX';
 import { TicTacToe } from './TicTacToe';
 
 type Colors = { text: string; muted: string; accent: string; card: string };
@@ -42,24 +43,50 @@ export function addToScore(score: Score, outcome: Outcome): Score {
 const ZERO: Score = { wins: 0, losses: 0, draws: 0 };
 const OUTCOME_TEXT: Record<Outcome, string> = { win: 'You win!', lose: 'Computer wins!', draw: 'Draw!' };
 
+/** How long the "Rock… Paper… Scissors…" countdown runs before the hands are shown. */
+export const RPS_COUNTDOWN_MS = 900;
+const COUNTDOWN = ['Rock…', 'Paper…', 'Scissors…'];
+
 export function RockPaperScissors({ spec, color }: { spec: { title?: string }; color: Colors }) {
   const [score, setScore] = useState<Score>(ZERO);
   const [round, setRound] = useState<{ player: Hand; computer: Hand; outcome: Outcome } | null>(null);
+  const [beat, setBeat] = useState<number | null>(null); // countdown step while the hands are hidden
+  useEffect(() => {
+    if (beat === null || !round) return;
+    if (beat >= COUNTDOWN.length) {
+      setBeat(null);
+      setScore(sc => addToScore(sc, round.outcome));
+      haptic(round.outcome === 'win' ? 'win' : round.outcome === 'lose' ? 'lose' : 'tap');
+      return;
+    }
+    const t = setTimeout(() => setBeat(b => (b === null ? null : b + 1)), RPS_COUNTDOWN_MS / COUNTDOWN.length);
+    return () => clearTimeout(t);
+  }, [beat, round]);
   const choose = (player: Hand) => {
     const computer = computerHand();
-    const outcome = rpsOutcome(player, computer);
-    setRound({ player, computer, outcome });
-    setScore(s => addToScore(s, outcome));
+    haptic('tap');
+    setRound({ player, computer, outcome: rpsOutcome(player, computer) });
+    setBeat(0);
   };
+  const revealed = round && beat === null;
   return (
     <View style={[styles.box, { borderColor: color.muted }]}>
       <Text style={[styles.title, { color: color.text }]}>{spec.title || 'Rock Paper Scissors'}</Text>
-      {round ? (
+      {round && beat !== null ? (
+        <Text style={[styles.countdown, { color: color.accent }]} accessibilityLiveRegion="polite">{COUNTDOWN[Math.min(beat, 2)]}</Text>
+      ) : revealed ? (
+        <View style={styles.faceoff}>
+          <Pop><Text style={styles.bigHand}>{HAND_ICON[round.player]}</Text></Pop>
+          <Text style={[styles.vs, { color: color.muted }]}>vs</Text>
+          <Pop><Text style={styles.bigHand}>{HAND_ICON[round.computer]}</Text></Pop>
+        </View>
+      ) : (
+        <Text style={[styles.status, { color: color.text }]}>Choose rock, paper or scissors</Text>
+      )}
+      {revealed && (
         <Text style={[styles.status, { color: color.accent }]} accessibilityLiveRegion="polite">
           {`You: ${round.player} · Computer: ${round.computer} → ${OUTCOME_TEXT[round.outcome]}`}
         </Text>
-      ) : (
-        <Text style={[styles.status, { color: color.text }]}>Choose rock, paper or scissors</Text>
       )}
       <View style={styles.row}>
         {HANDS.map(h => (
@@ -79,13 +106,14 @@ export function RockPaperScissors({ spec, color }: { spec: { title?: string }; c
       </View>
       <Text style={{ color: color.text }}>{`Score · You ${score.wins} · Computer ${score.losses} · Draws ${score.draws}`}</Text>
       <View style={styles.row}>
-        <Pressable testID="rps-again" accessibilityRole="button" disabled={!round} onPress={() => setRound(null)}>
-          <Text style={[styles.action, { color: round ? color.accent : color.muted }]}>Play Again</Text>
+        <Pressable testID="rps-again" accessibilityRole="button" disabled={!revealed} onPress={() => setRound(null)}>
+          <Text style={[styles.action, { color: revealed ? color.accent : color.muted }]}>Play Again</Text>
         </Pressable>
-        <Pressable testID="rps-reset" accessibilityRole="button" onPress={() => { setRound(null); setScore(ZERO); }}>
+        <Pressable testID="rps-reset" accessibilityRole="button" onPress={() => { setRound(null); setBeat(null); setScore(ZERO); }}>
           <Text style={[styles.action, { color: color.accent }]}>Reset</Text>
         </Pressable>
       </View>
+      <Celebration show={!!revealed && round.outcome === 'win'} text="You win!" color={color.accent} />
     </View>
   );
 }
@@ -111,7 +139,13 @@ export function guess(game: GuessGame, input: string): GuessGame {
   if (n === game.secret) {
     return { ...game, attempts, done: true, message: `Correct! It was ${n}. You got it in ${attempts} ${attempts === 1 ? 'attempt' : 'attempts'}.` };
   }
-  return { ...game, attempts, message: n > game.secret ? `${n} is too high` : `${n} is too low` };
+  return { ...game, attempts, message: `${n > game.secret ? `${n} is too high` : `${n} is too low`} · ${warmth(n, game)}` };
+}
+
+/** How close a wrong guess is, as a share of the range: 🔥 hot (within 10 %), ☀️ warm (25 %), 🧊 cold. */
+export function warmth(n: number, game: Pick<GuessGame, 'secret' | 'min' | 'max'>): string {
+  const off = Math.abs(n - game.secret) / Math.max(1, game.max - game.min);
+  return off <= 0.1 ? '🔥 hot' : off <= 0.25 ? '☀️ warm' : '🧊 cold';
 }
 
 export function NumberGuessing({ spec, color }: { spec: { title?: string; min?: number; max?: number }; color: Colors }) {
@@ -119,8 +153,13 @@ export function NumberGuessing({ spec, color }: { spec: { title?: string; min?: 
   const max = Number.isInteger(spec.max) && (spec.max as number) > min ? (spec.max as number) : 20;
   const [game, setGame] = useState(() => newGuessGame(min, max));
   const [input, setInput] = useState('');
+  const [best, offerBest] = useBest('number_guessing');
+  const [record, setRecord] = useState(false);
   const submit = () => {
-    setGame(g => guess(g, input));
+    const next = guess(game, input);
+    haptic(next.done ? 'win' : 'tap');
+    if (next.done && !game.done) setRecord(offerBest(next.attempts));
+    setGame(next);
     setInput('');
   };
   return (
@@ -129,7 +168,7 @@ export function NumberGuessing({ spec, color }: { spec: { title?: string; min?: 
       <Text style={[styles.status, { color: game.done ? color.accent : color.text }]} accessibilityLiveRegion="polite">
         {game.message}
       </Text>
-      <Text style={{ color: color.muted }}>{`Attempts: ${game.attempts}`}</Text>
+      <Text style={{ color: color.muted }}>{`Attempts: ${game.attempts}${best !== null ? ` · Best: ${best}` : ''}`}</Text>
       <View style={styles.row}>
         <TextInput
           testID="guess-input"
@@ -148,9 +187,10 @@ export function NumberGuessing({ spec, color }: { spec: { title?: string; min?: 
           <Text style={[styles.action, { color: game.done || !input.trim() ? color.muted : color.accent }]}>Guess</Text>
         </Pressable>
       </View>
-      <Pressable testID="guess-new" accessibilityRole="button" onPress={() => { setGame(newGuessGame(min, max)); setInput(''); }}>
+      <Pressable testID="guess-new" accessibilityRole="button" onPress={() => { setGame(newGuessGame(min, max)); setInput(''); setRecord(false); }}>
         <Text style={[styles.action, { color: color.accent }]}>New Game</Text>
       </Pressable>
+      <Celebration show={game.done} text={record ? 'New best!' : 'Got it!'} color={color.accent} />
     </View>
   );
 }
@@ -200,11 +240,18 @@ export function MemoryMatch({ spec, color }: { spec: { title?: string }; color: 
     return () => clearTimeout(t);
   }, [game.locked]);
   const done = isComplete(game);
+  const [best, offerBest] = useBest('memory_match');
+  const [record, setRecord] = useState(false);
+  useEffect(() => {
+    if (!done) return;
+    haptic('win');
+    setRecord(offerBest(game.moves));
+  }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <View style={[styles.box, { borderColor: color.muted }]}>
       <Text style={[styles.title, { color: color.text }]}>{spec.title || 'Memory Match'}</Text>
       <Text style={[styles.status, { color: done ? color.accent : color.text }]} accessibilityLiveRegion="polite">
-        {done ? `All pairs found in ${game.moves} moves!` : `Moves: ${game.moves}`}
+        {done ? `All pairs found in ${game.moves} moves!` : `Moves: ${game.moves}${best !== null ? ` · Best: ${best}` : ''}`}
       </Text>
       <View style={styles.memoryBoard}>
         {game.cards.map((c, i) => {
@@ -216,17 +263,18 @@ export function MemoryMatch({ spec, color }: { spec: { title?: string }; color: 
               accessibilityRole="button"
               accessibilityLabel={`Card ${i + 1}, ${up ? c.face : 'hidden'}${c.matched ? ', matched' : ''}`}
               disabled={game.locked || c.matched}
-              onPress={() => setGame(g => flip(g, i))}
+              onPress={() => { haptic('tap'); setGame(g => flip(g, i)); }}
               style={[styles.card, { borderColor: color.muted, backgroundColor: up ? color.card : color.accent }]}
             >
-              <Text style={styles.cardFace}>{up ? c.face : ''}</Text>
+              {up ? <Pop><Text style={[styles.cardFace, c.matched ? styles.matched : null]}>{c.face}</Text></Pop> : <Text style={styles.cardBack}>?</Text>}
             </Pressable>
           );
         })}
       </View>
-      <Pressable testID="mem-new" accessibilityRole="button" onPress={() => setGame(newMemoryGame())}>
+      <Pressable testID="mem-new" accessibilityRole="button" onPress={() => { setGame(newMemoryGame()); setRecord(false); }}>
         <Text style={[styles.action, { color: color.accent }]}>{done ? 'Play Again' : 'New Game'}</Text>
       </Pressable>
+      <Celebration show={done} text={record ? 'New best!' : 'All pairs found!'} color={color.accent} />
     </View>
   );
 }
@@ -311,8 +359,8 @@ export function GameMenu({ spec, color }: { spec: { title?: string; games: any[]
 }
 
 const styles = StyleSheet.create({
-  box: { marginTop: 8, padding: 10, borderWidth: 1, borderRadius: 10, alignItems: 'center', gap: 6 },
-  title: { fontWeight: '700', fontSize: 20 },
+  box: { marginTop: 8, padding: 14, borderWidth: 1, borderRadius: 16, alignItems: 'center', gap: 8 },
+  title: { fontWeight: '800', fontSize: 24 },
   status: { fontWeight: '600', textAlign: 'center' },
   row: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   choice: { borderWidth: 1, borderRadius: 12, padding: 12, alignItems: 'center', width: 96 },
@@ -323,6 +371,12 @@ const styles = StyleSheet.create({
   memoryBoard: { width: 304, flexDirection: 'row', flexWrap: 'wrap' },
   card: { width: 72, height: 72, margin: 2, borderWidth: 1, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   cardFace: { fontSize: 34 },
+  cardBack: { fontSize: 28, fontWeight: '900', color: 'rgba(255,255,255,0.55)' },
+  matched: { opacity: 0.55 },
+  countdown: { fontSize: 34, fontWeight: '900', marginVertical: 18 },
+  faceoff: { flexDirection: 'row', alignItems: 'center', gap: 18, marginVertical: 6 },
+  bigHand: { fontSize: 64 },
+  vs: { fontSize: 18, fontWeight: '700' },
   menuItem: { borderWidth: 1, borderRadius: 12, paddingVertical: 16, width: 280, alignItems: 'center' },
   menuText: { fontSize: 18, fontWeight: '600' },
 });

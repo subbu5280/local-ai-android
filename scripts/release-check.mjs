@@ -33,7 +33,7 @@ run('Jest (all suites)', 'npx', ['jest', '--silent']);
 // 2. Android manifest: only the permissions the features need; no app data in cloud backup / device transfer.
 const manifest = readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8');
 const perms = [...manifest.matchAll(/<uses-permission android:name="([^"]+)" \/>/g)].map(m => m[1]).sort();
-const allowed = ['android.permission.ACCESS_COARSE_LOCATION', 'android.permission.ACCESS_NETWORK_STATE', 'android.permission.INTERNET', 'android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.RECORD_AUDIO'];
+const allowed = ['android.permission.ACCESS_COARSE_LOCATION', 'android.permission.ACCESS_NETWORK_STATE', 'android.permission.INTERNET', 'android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.RECORD_AUDIO', 'android.permission.VIBRATE'];
 check('Manifest permissions', JSON.stringify(perms) === JSON.stringify(allowed), perms.join(', '));
 check('Manifest backup settings', /android:allowBackup="false"/.test(manifest) && /android:dataExtractionRules=/.test(manifest), 'allowBackup=false + dataExtractionRules');
 check('Manifest not debuggable', !/android:debuggable="true"/.test(manifest));

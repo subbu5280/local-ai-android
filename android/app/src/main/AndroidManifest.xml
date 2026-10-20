@@ -14,6 +14,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Re-arm scheduled tasks after a restart (Android clears alarms on reboot). Normal permission, no prompt. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Games: short vibrations on moves and wins (normal permission, no prompt). -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Android 11+ package visibility: find the system speech recognizer and text-to-speech engines. -->
     <queries>
       <intent><action android:name="android.speech.RecognitionService" /></intent>

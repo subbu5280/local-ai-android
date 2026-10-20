@@ -5,7 +5,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import { Text } from 'react-native';
-import {
+import { RPS_COUNTDOWN_MS,
   addToScore, computerHand, flip, guess, hideMismatch, isComplete, newGuessGame, newMemoryGame, rpsOutcome,
   FACES, GameMenu, MemoryMatch, NumberGuessing, RockPaperScissors, type Hand, type MemoryGame,
 } from '../src/Games';
@@ -42,17 +42,24 @@ test('RPS: computer hand covers all three choices; score adds up', () => {
 
 test('RPS component: play, score, Play Again, Reset', async () => {
   const spy = jest.spyOn(Math, 'random').mockReturnValue(0.9); // computer: scissors
+  jest.useFakeTimers();
   const { texts, press, byId } = await render(<RockPaperScissors spec={{}} color={color} />);
+  const countdown = async () => { for (let i = 0; i < 4; i++) await ReactTestRenderer.act(() => { jest.advanceTimersByTime(RPS_COUNTDOWN_MS / 3 + 1); }); };
   await press('rps-rock');
+  expect(texts()).toContain('Rock…'); // the countdown hides the hands first
+  expect(texts()).toContain('Score · You 0 · Computer 0 · Draws 0');
+  await countdown();
   expect(texts()).toContain('You: rock · Computer: scissors → You win!');
   expect(texts()).toContain('Score · You 1 · Computer 0 · Draws 0');
   expect(byId('rps-paper').props.disabled).toBe(true); // one choice per round
   await press('rps-again');
   await press('rps-paper');
+  await countdown();
   expect(texts()).toContain('Score · You 1 · Computer 1 · Draws 0');
   await press('rps-reset');
   expect(texts()).toContain('Score · You 0 · Computer 0 · Draws 0');
   expect(texts()).toContain('Choose rock, paper or scissors');
+  jest.useRealTimers();
   spy.mockRestore();
 });
 
@@ -63,9 +70,11 @@ test('Number guessing: secret in 1-20, too high/low/correct, attempts', () => {
   let g = newGuessGame(1, 20, () => 0.6); // secret 13
   expect(g.secret).toBe(13);
   g = guess(g, '18');
-  expect(g.message).toBe('18 is too high');
+  expect(g.message).toBe('18 is too high · 🧊 cold'); // 5 away out of a range of 19
   g = guess(g, '4');
-  expect(g.message).toBe('4 is too low');
+  expect(g.message).toBe('4 is too low · 🧊 cold');
+  expect(guess(g, '14').message).toBe('14 is too high · 🔥 hot'); // 1 away
+  expect(guess(g, '16').message).toBe('16 is too high · ☀️ warm'); // 3 away
   g = guess(g, ' 13 ');
   expect(g.done).toBe(true);
   expect(g.message).toBe('Correct! It was 13. You got it in 3 attempts.');
@@ -87,13 +96,13 @@ test('Number guessing component: guess via input, then New Game resets', async (
   const input = () => r.root.findAll(n => n.props.testID === 'guess-input' && typeof n.props.onChangeText === 'function')[0];
   await ReactTestRenderer.act(() => input().props.onChangeText('19'));
   await press('guess-submit');
-  expect(texts()).toContain('19 is too high');
+  expect(texts()).toContain('19 is too high · 🧊 cold');
   expect(texts()).toContain('Attempts: 1');
   await ReactTestRenderer.act(() => input().props.onChangeText('13'));
   await press('guess-submit');
   expect(texts()).toContain('Correct! It was 13. You got it in 2 attempts.');
   await press('guess-new');
-  expect(texts()).toContain('Attempts: 0');
+  expect(texts()).toContain('Attempts: 0 · Best: 2'); // the best result is kept
   expect(texts()).toContain('Guess a number from 1 to 20');
   spy.mockRestore();
 });
@@ -170,5 +179,5 @@ test('Game menu lists the four games and opens the chosen one', async () => {
   expect(texts()).toContain('Guess a number from 1 to 20');
   await press('menu-back');
   await press('menu-tic_tac_toe');
-  expect(texts()).toContain("Player X's turn");
+  expect(texts()).toContain('Your turn (X)'); // against the phone by default
 });

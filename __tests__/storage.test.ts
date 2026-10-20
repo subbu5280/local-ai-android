@@ -167,7 +167,7 @@ test('Android configuration: no cloud backup or device transfer of app data, no 
   expect(manifest).toMatch(/android:allowBackup="false"/);
   expect(manifest).toMatch(/android:dataExtractionRules="@xml\/data_extraction_rules"/);
   expect(manifest).not.toMatch(/android:debuggable="true"|MANAGE_EXTERNAL_STORAGE|READ_MEDIA|<uses-permission android:name="android.permission.(READ|WRITE)_EXTERNAL_STORAGE" \/>/);
-  expect([...manifest.matchAll(/<uses-permission android:name="([^"]+)" \/>/g)].map(m => m[1])).toEqual(['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE', 'android.permission.ACCESS_COARSE_LOCATION', 'android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED']);
+  expect([...manifest.matchAll(/<uses-permission android:name="([^"]+)" \/>/g)].map(m => m[1])).toEqual(['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE', 'android.permission.ACCESS_COARSE_LOCATION', 'android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.VIBRATE']);
   const rules = fs.readFileSync('android/app/src/main/res/xml/data_extraction_rules.xml', 'utf8');
   for (const part of ['cloud-backup', 'device-transfer']) {
     const section = rules.match(new RegExp(`<${part}>([\\s\\S]*?)</${part}>`))![1];

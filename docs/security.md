@@ -55,6 +55,7 @@ reaches any `console` method, and `src/backup/` has no logging at all.
   - `RECORD_AUDIO`: asked when you tap the microphone.
   - `POST_NOTIFICATIONS`: asked when you schedule the first task (Android 13+).
   - `RECEIVE_BOOT_COMPLETED`: re-arms scheduled-task alarms after a restart (normal permission, no prompt).
+  - `VIBRATE`: short vibrations in games (normal permission, no prompt).
   - `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, added by AndroidX; signature-level and internal.
   - No storage, media or camera permission: the camera and gallery go through Android's own pickers.
   - `READ`/`WRITE_EXTERNAL_STORAGE` from react-native-fs are explicitly removed.

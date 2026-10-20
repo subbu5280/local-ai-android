@@ -109,10 +109,15 @@ The picture is made **on the phone** by SD-Turbo with stable-diffusion.cpp, and 
 
 ## Games
 
-**Games** in the header opens Tic-Tac-Toe, Rock Paper Scissors, Number Guessing and Memory Match in full screen: the
-status and navigation bars hide, and a swipe from the edge shows them. You can also ask in chat: "play tic tac toe",
-"let's play a game". The game opens right in the conversation and stays there when you come back. Questions about
-games ("rules of chess") still go to the model.
+**Games** in the header opens them full screen (a swipe from the edge shows the system bars). You can also ask in
+chat: "play tic tac toe", "let's play a game"; the game opens in the conversation and stays there.
+
+- **Tic-Tac-Toe:** play against the phone (🙂 Easy can be beaten; 😈 Hard plays perfectly and never loses) or with a
+  friend on the same phone. A running score shows You, Phone and Draws.
+- **Rock Paper Scissors:** a "Rock… Paper… Scissors…" countdown, then the two hands face off.
+- **Number Guessing:** each wrong guess says too high or too low, and 🔥 hot, ☀️ warm or 🧊 cold.
+- **Memory Match:** cards pop as they turn; matched pairs fade.
+- Wins get a celebration and a short vibration. Your best results (fewest guesses, fewest moves) are kept on the phone.
 
 ## Scheduled tasks
 
